@@ -1,0 +1,383 @@
+package com.example.splash
+
+import android.content.Intent
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material3.*
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.splash.ui.theme.SplashTheme
+
+class HomeActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            SplashTheme {
+                HomeScreen()
+            }
+        }
+    }
+}
+
+// Warna Tema
+val DashboardPrimaryColor = Color(0xFFFF6568)
+val DashboardLightPrimaryColor = Color(0xFFFFEBEE)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HomeScreen() {
+    val context = LocalContext.current
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { 
+                    Text(
+                        "HR Online", 
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    ) 
+                },
+                navigationIcon = {
+                    IconButton(onClick = {}) {
+                        Icon(Icons.Default.Menu, contentDescription = "Menu", tint = Color.White)
+                    }
+                },
+                actions = {
+                    IconButton(onClick = {}) {
+                        Icon(Icons.Default.Notifications, contentDescription = "Notifikasi", tint = Color.White)
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = DashboardPrimaryColor
+                )
+            )
+        }
+        ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xFFF5F5F5)) // Light grey background
+                .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
+        ) {
+            HeaderSection()
+            AttendanceCardSection(
+                onClockInClick = {
+                    val intent = Intent(context, AttendanceActivity::class.java)
+                    intent.putExtra("attendance_type", "CHECK_IN")
+                    context.startActivity(intent)
+                },
+                onClockOutClick = {
+                    val intent = Intent(context, AttendanceActivity::class.java)
+                    intent.putExtra("attendance_type", "CHECK_OUT")
+                    context.startActivity(intent)
+                }
+            )
+            MenuSection(
+                onAttendanceClick = {
+                    // Navigasi ke Halaman Absensi
+                    val intent = Intent(context, AttendanceActivity::class.java)
+                    intent.putExtra("attendance_type", "CHECK_IN")
+                    context.startActivity(intent)
+                },
+                onHistoryClick = {
+                    // Navigasi ke History Absensi
+                    context.startActivity(Intent(context, HistoryActivity::class.java))
+                }
+            )
+            AnnouncementSection()
+        }
+    }
+}
+
+@Composable
+fun HeaderSection() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                color = DashboardPrimaryColor,
+                shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
+            )
+            .padding(start = 24.dp, end = 24.dp, bottom = 24.dp, top = 8.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "Selamat pagi, Aries Adityanto",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+            Text(
+                text = "PT XYZ Tbk",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.White.copy(alpha = 0.9f)
+            )
+        }
+    }
+}
+
+@Composable
+fun AttendanceCardSection(
+    onClockInClick: () -> Unit,
+    onClockOutClick: () -> Unit
+) {
+    val currentDate = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.forLanguageTag("id-ID")).format(Date())
+    val currentTime = SimpleDateFormat("HH.mm", Locale.getDefault()).format(Date())
+    
+    Card(
+        colors = CardDefaults.cardColors(containerColor = DashboardPrimaryColor),
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 16.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = currentDate,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.White
+                )
+                Text(
+                    text = currentTime,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(20.dp))
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Button(
+                    onClick = onClockInClick,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(50.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = "ABSEN MASUK",
+                        color = DashboardPrimaryColor,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
+                
+                Button(
+                    onClick = onClockOutClick,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(50.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = "ABSEN PULANG",
+                        color = DashboardPrimaryColor,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun MenuSection(
+    onAttendanceClick: () -> Unit,
+    onHistoryClick: () -> Unit
+) {
+    Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)) {
+        // Grid 3 kolom untuk menu
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            MenuCard(
+                title = "Data Diri",
+                icon = Icons.Default.Person,
+                modifier = Modifier.weight(1f)
+            )
+            MenuCard(
+                title = "History Absensi",
+                icon = Icons.Default.LocationOn,
+                modifier = Modifier.weight(1f),
+                onClick = onHistoryClick
+            )
+            MenuCard(
+                title = "Kalender",
+                icon = Icons.Default.DateRange,
+                modifier = Modifier.weight(1f)
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            MenuCard(
+                title = "Cuti",
+                icon = Icons.Default.DateRange,
+                modifier = Modifier.weight(1f)
+            )
+            MenuCard(
+                title = "Slip Gaji",
+                icon = Icons.Default.CheckCircle,
+                modifier = Modifier.weight(1f)
+            )
+            MenuCard(
+                title = "Pengumuman",
+                icon = Icons.Default.Notifications,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
+fun MenuCard(
+    title: String, 
+    icon: ImageVector, 
+    modifier: Modifier = Modifier, 
+    onClick: () -> Unit = {}
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        shape = RoundedCornerShape(16.dp),
+        modifier = modifier
+            .height(120.dp)
+            .fillMaxWidth()
+            .clickable(onClick = onClick) // Membuat kartu bisa diklik
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(50.dp)
+                    .clip(CircleShape)
+                    .background(DashboardLightPrimaryColor),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = title,
+                    tint = DashboardPrimaryColor,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = title,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.DarkGray
+            )
+        }
+    }
+}
+
+@Composable
+fun AnnouncementSection() {
+    Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Pengumuman",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+            Text(
+                text = "Lihat semua...",
+                fontSize = 12.sp,
+                color = DashboardPrimaryColor,
+                modifier = Modifier.clickable { }
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        Card(
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp)
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Tidak ada pengumuman",
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun HomePreview() {
+    SplashTheme {
+        HomeScreen()
+    }
+}

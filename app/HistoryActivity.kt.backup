@@ -1,0 +1,241 @@
+package com.example.splash
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.splash.ui.theme.SplashTheme
+
+class HistoryActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            SplashTheme {
+                HistoryScreen(onBackClick = { finish() })
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HistoryScreen(onBackClick: () -> Unit) {
+    val context = LocalContext.current
+    val primaryColor = Color(0xFFFF6568)
+    
+    var attendanceHistory by remember {
+        mutableStateOf(AttendanceStorage.getAttendanceHistory(context))
+    }
+    
+    // Refresh history when screen is focused/resumed
+    LaunchedEffect(Unit) {
+        attendanceHistory = AttendanceStorage.getAttendanceHistory(context)
+        android.util.Log.d("HistoryAct", "History loaded: ${attendanceHistory.size} records")
+    }
+    
+    // Refresh saat kembali ke halaman ini
+    DisposableEffect(Unit) {
+        attendanceHistory = AttendanceStorage.getAttendanceHistory(context)
+        onDispose { }
+    }
+    
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { 
+                    Text(
+                        "History Absensi",
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    ) 
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color.White
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = primaryColor)
+            )
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xFFF5F5F5))
+                .padding(innerPadding)
+        ) {
+            if (attendanceHistory.isEmpty()) {
+                // Empty state
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = "Empty",
+                            tint = Color.Gray,
+                            modifier = Modifier.size(80.dp)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Belum ada riwayat absensi",
+                            fontSize = 16.sp,
+                            color = Color.Gray,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = "Riwayat absensi Anda akan muncul di sini",
+                            fontSize = 14.sp,
+                            color = Color.Gray,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(attendanceHistory) { record ->
+                        AttendanceHistoryItem(record)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AttendanceHistoryItem(record: AttendanceRecord) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Icon
+            Box(
+                modifier = Modifier
+                    .size(50.dp)
+                    .background(
+                        color = if (record.type == AttendanceType.CHECK_IN) 
+                            Color(0xFFE8F5E9) 
+                        else 
+                            Color(0xFFFFF3E0),
+                        shape = RoundedCornerShape(12.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = null,
+                    tint = if (record.type == AttendanceType.CHECK_IN) 
+                        Color(0xFF4CAF50) 
+                    else 
+                        Color(0xFFFF9800),
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+            
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            // Content
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = if (record.type == AttendanceType.CHECK_IN) "Absen Masuk" else "Absen Pulang",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = record.date,
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
+                Text(
+                    text = record.time,
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.LocationOn,
+                        contentDescription = null,
+                        tint = Color.Gray,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = record.location,
+                        fontSize = 12.sp,
+                        color = Color.Gray,
+                        maxLines = 1
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun HistoryScreenPreview() {
+    SplashTheme {
+        HistoryScreen(onBackClick = {})
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun AttendanceHistoryItemPreview() {
+    SplashTheme {
+        AttendanceHistoryItem(
+            record = AttendanceRecord(
+                id = "1",
+                type = AttendanceType.CHECK_IN,
+                date = "15 Januari 2024",
+                time = "08:00 WIB",
+                location = "Kantor Pusat, Jakarta",
+                timestamp = System.currentTimeMillis()
+            )
+        )
+    }
+}

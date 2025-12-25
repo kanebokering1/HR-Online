@@ -1,0 +1,979 @@
+package com.example.splash
+
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.location.Geocoder
+import android.location.Location
+import android.os.Build
+import android.os.Bundle
+import android.os.Looper
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.content.ContextCompat
+import com.example.splash.ui.theme.SplashTheme
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
+/**
+ * AttendanceActivity dengan struktur yang lebih bersih
+ * dan dialog success yang lebih reliable
+ */
+class AttendanceActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val attendanceType = intent.getStringExtra("attendance_type") ?: "CHECK_IN"
+        val type = try {
+            AttendanceType.valueOf(attendanceType)
+        } catch (@Suppress("UNUSED_PARAMETER") e: Exception) {
+            AttendanceType.CHECK_IN
+        }
+        
+        setContent {
+            SplashTheme {
+                AttendanceScreen(
+                    attendanceType = type,
+                    activity = this@AttendanceActivity,
+                    onBackClick = { finish() }
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AttendanceScreen(
+    attendanceType: AttendanceType,
+    activity: ComponentActivity,
+    onBackClick: () -> Unit
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val primaryColor = Color(0xFFFF6568)
+    
+    // State Management - lebih eksplisit
+    var locationName by remember { mutableStateOf("Mendeteksi lokasi...") }
+    var isLocationLoading by remember { mutableStateOf(true) }
+    var showFaceDetection by remember { mutableStateOf(false) }
+    var showConfirmDialog by remember { mutableStateOf(false) }
+    var showLoadingDialog by remember { mutableStateOf(false) }
+    
+    // State untuk success dialog - menggunakan data class untuk lebih reliable
+    var successData by remember { 
+        mutableStateOf<SuccessDialogData?>(null) 
+    }
+    
+    // Location Service
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+    
+    // Get location
+    LaunchedEffect(Unit) {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            fusedLocationClient.lastLocation.addOnSuccessListener { loc ->
+                if (loc != null) {
+                    updateLocationNameForAttendance(context, loc) { name: String ->
+                        locationName = name
+                        isLocationLoading = false
+                    }
+                } else {
+                    val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 1000)
+                        .setWaitForAccurateLocation(false)
+                        .setMinUpdateIntervalMillis(500)
+                        .setMaxUpdateDelayMillis(1000)
+                        .build()
+                    
+                    val callback = object : LocationCallback() {
+                        override fun onLocationResult(result: LocationResult) {
+                            fusedLocationClient.removeLocationUpdates(this)
+                            updateLocationNameForAttendance(context, result.lastLocation) { name: String ->
+                                locationName = name
+                                isLocationLoading = false
+                            }
+                        }
+                    }
+                    fusedLocationClient.requestLocationUpdates(locationRequest, callback, Looper.getMainLooper())
+                }
+            }
+        } else {
+            locationName = "Izin lokasi ditolak"
+            isLocationLoading = false
+        }
+    }
+    
+    // Handle success dialog dengan LaunchedEffect untuk memastikan muncul
+    LaunchedEffect(successData) {
+        if (successData != null) {
+            android.util.Log.d("AttendanceAct", "LaunchedEffect triggered: Success data is not null, dialog should appear")
+            android.util.Log.d("AttendanceAct", "Success data details: recordId=${successData!!.record.id}, isLate=${successData!!.isLate}")
+        } else {
+            android.util.Log.d("AttendanceAct", "LaunchedEffect triggered: Success data is null")
+        }
+    }
+    
+    // Debug: Log setiap kali successData berubah
+    SideEffect {
+        android.util.Log.d("AttendanceAct", "SideEffect: successData changed, isNull=${successData == null}")
+        if (successData != null) {
+            android.util.Log.d("AttendanceAct", "SideEffect: successData recordId=${successData!!.record.id}")
+        }
+    }
+    
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { 
+                    Column {
+                        Text("Absensi", fontWeight = FontWeight.Bold, color = Color.White)
+                        Text("Pastikan Anda berada di area kantor", fontSize = 12.sp, color = Color.White.copy(alpha = 0.8f))
+                    }
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = primaryColor)
+            )
+        }
+    ) { innerPadding ->
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                // Shift Card
+                ShiftCard(primaryColor, attendanceType)
+                
+                // Maps Placeholder
+                MapsPlaceholder(
+                    locationName = locationName,
+                    isLoading = isLocationLoading,
+                    primaryColor = primaryColor
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Face Detection Area
+                AnimatedVisibility(visible = showFaceDetection) {
+                    FaceDetectionArea(primaryColor) {
+                        showConfirmDialog = true
+                    }
+                }
+                
+                // Tombol Absen
+                if (!showFaceDetection) {
+                    val currentTime = remember { mutableStateOf(Date()) }
+                    LaunchedEffect(Unit) {
+                        while (true) {
+                            currentTime.value = Date()
+                            delay(1000)
+                        }
+                    }
+                    
+                    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+                    val currentTimeStr = timeFormat.format(currentTime.value)
+                    val currentHour = currentTimeStr.split(":")[0].toInt()
+                    val currentMinute = currentTimeStr.split(":")[1].toInt()
+                    
+                    val canCheckOut = if (attendanceType == AttendanceType.CHECK_OUT) {
+                        currentHour > 17 || (currentHour == 17 && currentMinute >= 0)
+                    } else {
+                        true
+                    }
+                    
+                    Button(
+                        onClick = { showFaceDetection = true },
+                        enabled = canCheckOut,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                            .height(50.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (canCheckOut) primaryColor else Color.Gray
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = if (attendanceType == AttendanceType.CHECK_IN) "ABSEN MASUK" else "ABSEN PULANG",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+            
+            // Dialog Konfirmasi
+            if (showConfirmDialog) {
+                ConfirmDialog(
+                    attendanceType = attendanceType,
+                    locationName = locationName,
+                    primaryColor = primaryColor,
+                    onConfirm = {
+                        showConfirmDialog = false
+                        scope.launch {
+                            android.util.Log.d("AttendanceAct", "Starting attendance process...")
+                            processAttendanceForScreen(
+                                context = context,
+                                attendanceType = attendanceType,
+                                locationName = locationName,
+                                onLoading = { isLoading: Boolean ->
+                                    // State update langsung di Main thread karena sudah di coroutine scope
+                                    showLoadingDialog = isLoading
+                                    android.util.Log.d("AttendanceAct", "Loading dialog: $isLoading")
+                                },
+                                onSuccess = { record: AttendanceRecord, isLate: Boolean ->
+                                    // PASTIKAN state update di Main thread untuk trigger recomposition
+                                    // Callback sudah dipanggil dari withContext(Dispatchers.Main) di processAttendanceForScreen
+                                    // Loading dialog sudah ditutup di processAttendanceForScreen sebelum callback ini dipanggil
+                                    android.util.Log.d("AttendanceAct", "Setting success data...")
+                                    
+                                    // Set success data - pastikan di Main thread
+                                    // Karena callback sudah dipanggil dari withContext(Dispatchers.Main), 
+                                    // kita bisa langsung update state
+                                    successData = SuccessDialogData(record, isLate)
+                                    android.util.Log.d("AttendanceAct", "Success data set! Record: ${record.id}, isLate: $isLate, successData is now: ${successData != null}")
+                                }
+                            )
+                        }
+                    },
+                    onCancel = { showConfirmDialog = false }
+                )
+            }
+            
+            // Dialog Loading - hanya muncul jika tidak ada success data
+            if (showLoadingDialog && successData == null) {
+                LoadingDialog(primaryColor)
+            }
+            
+            // Dialog Success - RENDER DI LEVEL TERATAS
+            // Dialog di Compose sudah memiliki layering yang baik, jadi tidak perlu zIndex
+            if (successData != null) {
+                val data = successData!!
+                android.util.Log.d("AttendanceAct", "Rendering Success Dialog with record: ${data.record.id}")
+                SuccessDialog(
+                    record = data.record,
+                    isLate = data.isLate,
+                    primaryColor = primaryColor,
+                    onDismiss = {
+                        android.util.Log.d("AttendanceAct", "Success dialog dismissed, navigating to HomeActivity")
+                        successData = null
+                        val homeIntent = Intent(context, HomeActivity::class.java)
+                        homeIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                        activity.startActivity(homeIntent)
+                        activity.finish()
+                    }
+                )
+            }
+        }
+    }
+}
+
+// Data class untuk success dialog
+data class SuccessDialogData(
+    val record: AttendanceRecord,
+    val isLate: Boolean
+)
+
+// Helper function untuk update location name - private untuk menghindari konflik
+private fun updateLocationNameForAttendance(
+    context: android.content.Context,
+    location: Location?,
+    onResult: (String) -> Unit
+) {
+    if (location == null) {
+        onResult("Lokasi tidak terdeteksi")
+        return
+    }
+    
+    try {
+        val geocoder = Geocoder(context, Locale.getDefault())
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            geocoder.getFromLocation(location.latitude, location.longitude, 1) { addresses ->
+                if (addresses.isNotEmpty()) {
+                    val address = addresses[0]
+                    val street = address.getAddressLine(0) ?: ""
+                    val city = address.locality ?: address.subAdminArea ?: ""
+                    val locationText = when {
+                        street.isNotEmpty() -> "$street, $city"
+                        city.isNotEmpty() -> city
+                        else -> "Lat: ${String.format(Locale.getDefault(), "%.4f", location.latitude)}, Lon: ${String.format(Locale.getDefault(), "%.4f", location.longitude)}"
+                    }
+                    onResult(locationText)
+                } else {
+                    onResult("Lat: ${String.format(Locale.getDefault(), "%.4f", location.latitude)}, Lon: ${String.format(Locale.getDefault(), "%.4f", location.longitude)}")
+                }
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
+            if (addresses != null && addresses.isNotEmpty()) {
+                val address = addresses[0]
+                val street = address.getAddressLine(0) ?: ""
+                val city = address.locality ?: address.subAdminArea ?: ""
+                val locationText = when {
+                    street.isNotEmpty() -> "$street, $city"
+                    city.isNotEmpty() -> city
+                    else -> "Lat: ${String.format(Locale.getDefault(), "%.4f", location.latitude)}, Lon: ${String.format(Locale.getDefault(), "%.4f", location.longitude)}"
+                }
+                onResult(locationText)
+            } else {
+                onResult("Lat: ${String.format(Locale.getDefault(), "%.4f", location.latitude)}, Lon: ${String.format(Locale.getDefault(), "%.4f", location.longitude)}")
+            }
+        }
+    } catch (@Suppress("UNUSED_PARAMETER") e: Exception) {
+        onResult("Lat: ${String.format(Locale.getDefault(), "%.4f", location.latitude)}, Lon: ${String.format(Locale.getDefault(), "%.4f", location.longitude)}")
+    }
+}
+
+// Process attendance - private untuk menghindari konflik
+private suspend fun processAttendanceForScreen(
+    context: android.content.Context,
+    attendanceType: AttendanceType,
+    locationName: String,
+    onLoading: (Boolean) -> Unit,
+    onSuccess: (AttendanceRecord, Boolean) -> Unit
+) {
+    // Pastikan callback dipanggil di Main thread
+    withContext(Dispatchers.Main) {
+        onLoading(true)
+    }
+    
+    delay(2000) // Simulasi loading
+    
+    val currentDate = SimpleDateFormat("dd MMMM yyyy", Locale.forLanguageTag("id-ID")).format(Date())
+    val currentTime = SimpleDateFormat("HH:mm WIB", Locale.getDefault()).format(Date())
+    val currentTimeStr = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+    val currentHour = currentTimeStr.split(":")[0].toInt()
+    val currentMinute = currentTimeStr.split(":")[1].toInt()
+    
+    val isLate = if (attendanceType == AttendanceType.CHECK_IN) {
+        currentHour > 8 || (currentHour == 8 && currentMinute > 0)
+    } else {
+        false
+    }
+    
+    val record = AttendanceRecord(
+        id = System.currentTimeMillis().toString(),
+        type = attendanceType,
+        date = currentDate,
+        time = currentTime,
+        location = locationName,
+        timestamp = System.currentTimeMillis()
+    )
+    
+    // Simpan data absensi
+    AttendanceStorage.saveAttendance(context, record)
+    android.util.Log.d("AttendanceAct", "Attendance saved: ${record.id}, location: ${record.location}")
+    
+    // Tutup loading dialog dulu, lalu delay sebelum show success
+    withContext(Dispatchers.Main) {
+        onLoading(false) // Tutup loading dialog
+        android.util.Log.d("AttendanceAct", "Loading dialog closed")
+    }
+    
+    delay(300) // Delay untuk memastikan loading dialog benar-benar tertutup
+    
+    // Pastikan callback dipanggil di Main thread
+    withContext(Dispatchers.Main) {
+        android.util.Log.d("AttendanceAct", "Calling onSuccess callback with record: ${record.id}")
+        onSuccess(record, isLate)
+        android.util.Log.d("AttendanceAct", "onSuccess callback completed")
+    }
+}
+
+// Composable Components
+@Composable
+fun ShiftCard(primaryColor: Color, attendanceType: AttendanceType) {
+    val currentTime = remember { mutableStateOf(Date()) }
+    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+    val dateFormat = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.forLanguageTag("id-ID"))
+    
+    LaunchedEffect(Unit) {
+        while (true) {
+            currentTime.value = Date()
+            delay(1000)
+        }
+    }
+    
+    val currentTimeStr = timeFormat.format(currentTime.value)
+    val currentHour = currentTimeStr.split(":")[0].toInt()
+    val currentMinute = currentTimeStr.split(":")[1].toInt()
+    
+    val isLate = if (attendanceType == AttendanceType.CHECK_IN) {
+        currentHour > 8 || (currentHour == 8 && currentMinute > 0)
+    } else {
+        false
+    }
+    
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE)),
+        shape = RoundedCornerShape(8.dp),
+        modifier = Modifier.fillMaxWidth().padding(16.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("SHIFT 1", color = primaryColor, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = currentTimeStr,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isLate) Color(0xFFD32F2F) else Color.Black
+                    )
+                    if (isLate && attendanceType == AttendanceType.CHECK_IN) {
+                        Text("Terlambat", fontSize = 10.sp, color = Color(0xFFD32F2F), fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(dateFormat.format(Date()), fontSize = 14.sp, color = Color.Black)
+                Text("08:00 - 17:00", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+            }
+        }
+    }
+}
+
+@Composable
+fun MapsPlaceholder(locationName: String, isLoading: Boolean, primaryColor: Color) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(250.dp)
+            .padding(horizontal = 16.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFFE0E0E0))
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val w = size.width
+            val h = size.height
+            drawLine(Color.White, Offset(0f, h * 0.3f), Offset(w, h * 0.3f), strokeWidth = 25f)
+            drawLine(Color.White, Offset(0f, h * 0.7f), Offset(w, h * 0.7f), strokeWidth = 25f)
+            drawLine(Color.White, Offset(w * 0.4f, 0f), Offset(w * 0.4f, h), strokeWidth = 25f)
+            drawLine(Color.White, Offset(w * 0.8f, 0f), Offset(w * 0.8f, h), strokeWidth = 25f)
+        }
+        Icon(Icons.Default.LocationOn, "Pin", tint = primaryColor, modifier = Modifier.size(56.dp).align(Alignment.Center).offset(y = (-20).dp))
+        Surface(color = primaryColor.copy(alpha = 0.9f), shape = RoundedCornerShape(8.dp), modifier = Modifier.align(Alignment.TopCenter).padding(top = 16.dp)) {
+            Row(modifier = Modifier.padding(12.dp, 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color.White, strokeWidth = 2.dp)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Mendeteksi lokasi...", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                } else {
+                    val infiniteTransition = rememberInfiniteTransition()
+                    val alpha by infiniteTransition.animateFloat(0.2f, 1f, infiniteRepeatable(tween(800), RepeatMode.Reverse))
+                    Box(Modifier.size(10.dp).clip(CircleShape).background(Color.White.copy(alpha = alpha)))
+                    Spacer(Modifier.width(8.dp))
+                    Text(locationName, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun FaceDetectionArea(primaryColor: Color, onFaceDetected: () -> Unit) {
+    var isDetecting by remember { mutableStateOf(true) }
+    var detectionProgress by remember { mutableFloatStateOf(0f) }
+    
+    LaunchedEffect(Unit) {
+        while (detectionProgress < 1f) {
+            delay(50)
+            detectionProgress += 0.02f
+        }
+        isDetecting = false
+        delay(500)
+        onFaceDetected()
+    }
+    
+    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            val infiniteTransition = rememberInfiniteTransition()
+            val scanOffset by infiniteTransition.animateFloat(-60f, 60f, infiniteRepeatable(tween(2000, easing = LinearEasing), RepeatMode.Restart))
+            Box(Modifier.size(150.dp).border(3.dp, primaryColor, CircleShape).background(Color(0xFFF5F5F5), CircleShape).clip(CircleShape), contentAlignment = Alignment.Center) {
+                Icon(Icons.Default.Face, "Face", tint = Color.Gray, modifier = Modifier.size(80.dp))
+                if (isDetecting) {
+                    Box(Modifier.width(120.dp).height(2.dp).offset(y = scanOffset.dp).background(primaryColor.copy(alpha = 0.8f)))
+                }
+            }
+            Spacer(Modifier.height(16.dp))
+            Text("MENDETEKSI WAJAH OTOMATIS", color = primaryColor, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            if (isDetecting) {
+                Text("Pastikan wajah terlihat jelas...", textAlign = TextAlign.Center, color = Color.Gray, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp))
+                LinearProgressIndicator(progress = { detectionProgress }, modifier = Modifier.fillMaxWidth(0.6f).padding(top = 8.dp), color = primaryColor)
+            } else {
+                Text("Wajah terdeteksi!", textAlign = TextAlign.Center, color = Color(0xFF4CAF50), fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp))
+            }
+        }
+    }
+}
+
+@Composable
+fun ConfirmDialog(
+    attendanceType: AttendanceType,
+    locationName: String,
+    primaryColor: Color,
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit
+) {
+    Dialog(onDismissRequest = onCancel) {
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            modifier = Modifier.fillMaxWidth().wrapContentHeight()
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = if (attendanceType == AttendanceType.CHECK_IN) "Konfirmasi Absen Masuk" else "Konfirmasi Absen Pulang",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                Box(
+                    modifier = Modifier.size(120.dp).clip(CircleShape).background(Color.LightGray),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.Face, "Face", modifier = Modifier.size(80.dp), tint = Color.Gray)
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                AttendanceDetailRow("Waktu", SimpleDateFormat("HH:mm WIB", Locale.getDefault()).format(Date()))
+                AttendanceDetailRow("Tanggal", SimpleDateFormat("dd MMMM yyyy", Locale.forLanguageTag("id-ID")).format(Date()))
+                AttendanceDetailRow("Lokasi", locationName)
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                Button(
+                    onClick = onConfirm,
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = if (attendanceType == AttendanceType.CHECK_IN) "KONFIRMASI ABSEN MASUK" else "KONFIRMASI ABSEN PULANG",
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                TextButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) {
+                    Text("Batal", color = Color.Gray)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AttendanceDetailRow(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, color = Color.Gray, fontSize = 14.sp)
+        Text(value, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+    }
+}
+
+@Composable
+fun LoadingDialog(primaryColor: Color) {
+    Dialog(onDismissRequest = {}) {
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
+            Column(
+                modifier = Modifier.padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CircularProgressIndicator(color = primaryColor)
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("Mengirim Data...", fontWeight = FontWeight.Medium)
+            }
+        }
+    }
+}
+
+@Composable
+fun SuccessDialog(
+    record: AttendanceRecord,
+    isLate: Boolean,
+    primaryColor: Color,
+    onDismiss: () -> Unit
+) {
+    // Log saat composable di-render
+    LaunchedEffect(Unit) {
+        android.util.Log.d("AttendanceAct", "SuccessDialog composable is being rendered!")
+    }
+    
+    val successColor = Color(0xFF4CAF50)
+    val lateColor = Color(0xFFFF9800)
+    
+    Dialog(
+        onDismissRequest = {
+            android.util.Log.d("AttendanceAct", "Dialog onDismissRequest called (should be blocked)")
+        },
+        properties = DialogProperties(
+            dismissOnBackPress = false,
+            dismissOnClickOutside = false
+        )
+    ) {
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+                .wrapContentHeight()
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Icon Success
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(CircleShape)
+                        .background(successColor.copy(alpha = 0.1f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = "Success",
+                        tint = successColor,
+                        modifier = Modifier.size(50.dp)
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Title
+                Text(
+                    text = "Absensi Berhasil!",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Subtitle
+                Text(
+                    text = if (record.type == AttendanceType.CHECK_IN) 
+                        "Absensi Masuk telah tercatat" 
+                    else 
+                        "Absensi Pulang telah tercatat",
+                    fontSize = 14.sp,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center
+                )
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                // Detail Info
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    SuccessInfoRow(
+                        icon = Icons.Default.LocationOn,
+                        label = "Lokasi",
+                        value = record.location,
+                        iconColor = primaryColor
+                    )
+                    
+                    SuccessInfoRow(
+                        icon = Icons.Default.CheckCircle,
+                        label = "Waktu",
+                        value = "${record.date} • ${record.time}",
+                        iconColor = primaryColor
+                    )
+                    
+                    // Keterangan Telat/Tepat Waktu
+                    if (record.type == AttendanceType.CHECK_IN) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = if (isLate) lateColor else successColor,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = if (isLate) "Terlambat" else "Tepat Waktu",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isLate) lateColor else successColor
+                            )
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                // Tombol OK
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = "OK",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SuccessInfoRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    value: String,
+    iconColor: Color
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = iconColor,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = label,
+                fontSize = 12.sp,
+                color = Color.Gray
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = value,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.Black,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview(showBackground = true, name = "Attendance Screen - Check In")
+@Composable
+fun AttendanceScreenPreviewCheckIn() {
+    SplashTheme {
+        val primaryColor = Color(0xFFFF6568)
+        var locationName by remember { mutableStateOf("Kantor Pusat, Jakarta Selatan") }
+        var isLocationLoading by remember { mutableStateOf(false) }
+        
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { 
+                        Column {
+                            Text("Absensi", fontWeight = FontWeight.Bold, color = Color.White)
+                            Text("Pastikan Anda berada di area kantor", fontSize = 12.sp, color = Color.White.copy(alpha = 0.8f))
+                        }
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = {}) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = primaryColor)
+                )
+            }
+        ) { innerPadding ->
+            Box(modifier = Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                ) {
+                    ShiftCard(primaryColor, AttendanceType.CHECK_IN)
+                    MapsPlaceholder(
+                        locationName = locationName,
+                        isLoading = isLocationLoading,
+                        primaryColor = primaryColor
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = { },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                            .height(50.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = "ABSEN MASUK",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview(showBackground = true, name = "Attendance Screen - Check Out")
+@Composable
+fun AttendanceScreenPreviewCheckOut() {
+    SplashTheme {
+        val primaryColor = Color(0xFFFF6568)
+        var locationName by remember { mutableStateOf("Kantor Pusat, Jakarta Selatan") }
+        var isLocationLoading by remember { mutableStateOf(false) }
+        
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { 
+                        Column {
+                            Text("Absensi", fontWeight = FontWeight.Bold, color = Color.White)
+                            Text("Pastikan Anda berada di area kantor", fontSize = 12.sp, color = Color.White.copy(alpha = 0.8f))
+                        }
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = {}) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = primaryColor)
+                )
+            }
+        ) { innerPadding ->
+            Box(modifier = Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                ) {
+                    ShiftCard(primaryColor, AttendanceType.CHECK_OUT)
+                    MapsPlaceholder(
+                        locationName = locationName,
+                        isLoading = isLocationLoading,
+                        primaryColor = primaryColor
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = { },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                            .height(50.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = "ABSEN PULANG",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true, name = "Success Dialog")
+@Composable
+fun SuccessDialogPreview() {
+    SplashTheme {
+        SuccessDialog(
+            record = AttendanceRecord(
+                id = "1",
+                type = AttendanceType.CHECK_IN,
+                date = "15 Januari 2024",
+                time = "08:15 WIB",
+                location = "Kantor Pusat, Jakarta Selatan",
+                timestamp = System.currentTimeMillis()
+            ),
+            isLate = true,
+            primaryColor = Color(0xFFFF6568),
+            onDismiss = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Confirm Dialog")
+@Composable
+fun ConfirmDialogPreview() {
+    SplashTheme {
+        ConfirmDialog(
+            attendanceType = AttendanceType.CHECK_IN,
+            locationName = "Kantor Pusat, Jakarta Selatan",
+            primaryColor = Color(0xFFFF6568),
+            onConfirm = {},
+            onCancel = {}
+        )
+    }
+}
+
