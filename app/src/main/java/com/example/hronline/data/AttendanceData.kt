@@ -100,5 +100,38 @@ object AttendanceStorage {
         
         return todayCheckIn != null && todayCheckOut == null
     }
+    
+    // Get attendance by month and year
+    fun getAttendanceByMonth(context: Context, month: Int, year: Int): List<AttendanceRecord> {
+        val allRecords = getAttendanceHistory(context)
+        return allRecords.filter { record ->
+            try {
+                val dateFormat = SimpleDateFormat("dd MMMM yyyy", Locale.forLanguageTag("id-ID"))
+                val recordDate = dateFormat.parse(record.date)
+                if (recordDate != null) {
+                    val calendar = java.util.Calendar.getInstance()
+                    calendar.time = recordDate
+                    calendar.get(java.util.Calendar.MONTH) + 1 == month && calendar.get(java.util.Calendar.YEAR) == year
+                } else {
+                    false
+                }
+            } catch (e: Exception) {
+                false
+            }
+        }
+    }
+    
+    // Group records by date
+    fun groupRecordsByDate(records: List<AttendanceRecord>): Map<String, Pair<AttendanceRecord?, AttendanceRecord?>> {
+        val grouped = mutableMapOf<String, Pair<AttendanceRecord?, AttendanceRecord?>>()
+        records.forEach { record ->
+            val existing = grouped[record.date] ?: Pair(null, null)
+            when (record.type) {
+                AttendanceType.CHECK_IN -> grouped[record.date] = Pair(record, existing.second)
+                AttendanceType.CHECK_OUT -> grouped[record.date] = Pair(existing.first, record)
+            }
+        }
+        return grouped
+    }
 }
 
