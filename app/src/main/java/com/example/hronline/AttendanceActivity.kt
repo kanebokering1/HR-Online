@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.os.Looper
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
@@ -95,12 +96,28 @@ fun AttendanceScreen(
     // Screen State Management - lebih simple dan robust
     var screenState by remember { mutableStateOf(AttendanceScreenState.ATTENDANCE_FORM) }
     
+    // Handle back button - di REPORT state, tombol back tidak berfungsi (tidak ada tombol back di top bar)
+    BackHandler(enabled = screenState == AttendanceScreenState.REPORT) {
+        // Di REPORT state, tombol back tidak berfungsi - user harus klik "Kembali ke Menu Utama"
+        android.util.Log.d("AttendanceActivity", "Back pressed in REPORT state - disabled, use button instead")
+    }
+    
+    // Log state changes
+    LaunchedEffect(screenState) {
+        android.util.Log.d("AttendanceActivity", "Screen state changed to: $screenState")
+    }
+    
     // State untuk Attendance Form
     var locationName by remember { mutableStateOf("Mendeteksi lokasi...") }
     var isLocationLoading by remember { mutableStateOf(true) }
     var showFaceDetection by remember { mutableStateOf(false) }
     var showConfirmDialog by remember { mutableStateOf(false) }
     var showLoadingDialog by remember { mutableStateOf(false) }
+    
+    // Log state changes for debugging
+    LaunchedEffect(showConfirmDialog) {
+        android.util.Log.d("AttendanceActivity", "showConfirmDialog changed to: $showConfirmDialog")
+    }
     
     // State untuk Report
     var attendanceRecord by remember { mutableStateOf<AttendanceRecord?>(null) }
@@ -156,14 +173,11 @@ fun AttendanceScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = {
-                        if (screenState == AttendanceScreenState.REPORT) {
-                            screenState = AttendanceScreenState.ATTENDANCE_FORM
-                        } else {
-                            onBackClick()
+                    // Hilangkan tombol back di REPORT state
+                    if (screenState != AttendanceScreenState.REPORT) {
+                        IconButton(onClick = onBackClick) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
                         }
-                    }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = primaryColor)
@@ -181,6 +195,7 @@ fun AttendanceScreen(
                 },
                 label = "screen_transition"
             ) { state ->
+                android.util.Log.d("AttendanceActivity", "AnimatedContent rendering state: $state, record: ${attendanceRecord?.id}")
                 when (state) {
                     AttendanceScreenState.ATTENDANCE_FORM -> {
                         AttendanceFormScreen(
@@ -192,42 +207,27 @@ fun AttendanceScreen(
                             primaryColor = primaryColor,
                             onFaceDetectionStart = { showFaceDetection = true },
                             onConfirmClick = {
+                                android.util.Log.d("AttendanceActivity", "onConfirmClick called - setting showConfirmDialog = true")
                                 showConfirmDialog = true
-                            },
-                            onConfirmDialogConfirm = {
-                                showConfirmDialog = false
-                                scope.launch {
-                                    processAttendance(
-                                        context = context,
-                                        attendanceType = attendanceType,
-                                        locationName = locationName,
-                                        onLoading = { isLoading ->
-                                            showLoadingDialog = isLoading
-                                        },
-                                onSuccess = { record, late ->
-                                    // Update state langsung karena sudah di coroutine scope
-                                    attendanceRecord = record
-                                    isLate = late
-                                    showLoadingDialog = false
-                                    screenState = AttendanceScreenState.REPORT
-                                }
-                                    )
-                                }
-                            },
-                            onConfirmDialogCancel = { showConfirmDialog = false }
+                                android.util.Log.d("AttendanceActivity", "showConfirmDialog set to: $showConfirmDialog")
+                            }
                         )
                     }
                     AttendanceScreenState.REPORT -> {
                         attendanceRecord?.let { record ->
+                            android.util.Log.d("AttendanceActivity", "Rendering REPORT screen with record: ${record.id}")
                             AttendanceReportScreen(
                                 modifier = Modifier.padding(innerPadding),
                                 record = record,
                                 isLate = isLate,
                                 primaryColor = primaryColor,
                                 onBackToHomeClick = {
+                                    android.util.Log.d("AttendanceActivity", "Back to home clicked - finishing activity")
                                     activity.finish()
                                 }
                             )
+                        } ?: run {
+                            android.util.Log.e("AttendanceActivity", "ERROR: attendanceRecord is null in REPORT state!")
                         }
                     }
                 }
@@ -235,12 +235,14 @@ fun AttendanceScreen(
             
             // Dialog Konfirmasi
             if (showConfirmDialog) {
+                android.util.Log.d("AttendanceActivity", "Rendering ConfirmDialog")
                 ConfirmDialog(
                     attendanceType = attendanceType,
                     locationName = locationName,
                     primaryColor = primaryColor,
                     onConfirm = {
                         showConfirmDialog = false
+                        android.util.Log.d("AttendanceActivity", "Confirm dialog confirmed (from dialog) - starting process")
                         scope.launch {
                             processAttendance(
                                 context = context,
@@ -251,10 +253,12 @@ fun AttendanceScreen(
                                 },
                                 onSuccess = { record, late ->
                                     // Update state langsung karena sudah di coroutine scope
+                                    android.util.Log.d("AttendanceActivity", "onSuccess called (from dialog) - Record: ${record.id}, isLate: $late")
                                     attendanceRecord = record
                                     isLate = late
                                     showLoadingDialog = false
                                     screenState = AttendanceScreenState.REPORT
+                                    android.util.Log.d("AttendanceActivity", "Screen state changed to REPORT, current state: $screenState")
                                 }
                             )
                         }
@@ -281,9 +285,7 @@ fun AttendanceFormScreen(
     showFaceDetection: Boolean,
     primaryColor: Color,
     onFaceDetectionStart: () -> Unit,
-    onConfirmClick: () -> Unit,
-    @Suppress("UNUSED_PARAMETER") onConfirmDialogConfirm: () -> Unit,
-    @Suppress("UNUSED_PARAMETER") onConfirmDialogCancel: () -> Unit
+    onConfirmClick: () -> Unit
 ) {
     Column(
         modifier = modifier
@@ -304,6 +306,7 @@ fun AttendanceFormScreen(
         // Face Detection Area
         AnimatedVisibility(visible = showFaceDetection) {
             FaceDetectionArea(primaryColor) {
+                android.util.Log.d("AttendanceActivity", "Face detected - calling onConfirmClick")
                 onConfirmClick()
             }
         }
@@ -367,9 +370,9 @@ fun AttendanceReportScreen(
         modifier = modifier
             .fillMaxSize()
             .background(Color(0xFFF5F5F5))
-            .verticalScroll(rememberScrollState())
+            .padding(vertical = 8.dp)
     ) {
-        // Success Header Card
+        // Success Header Card - lebih compact
         SuccessHeaderCard(
             attendanceType = record.type,
             isLate = isLate,
@@ -378,18 +381,18 @@ fun AttendanceReportScreen(
             lateColor = lateColor
         )
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         
-        // Detail Information Card
+        // Detail Information Card - lebih compact
         DetailInformationCard(
             record = record,
             primaryColor = primaryColor,
             successColor = successColor
         )
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         
-        // Status Card
+        // Status Card - lebih compact
         StatusCard(
             attendanceType = record.type,
             isLate = isLate,
@@ -399,26 +402,26 @@ fun AttendanceReportScreen(
             lateColor = lateColor
         )
         
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         
-        // Back to Home Button
+        // Back to Home Button - di bawah status card
         Button(
             onClick = onBackToHomeClick,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
-                .height(50.dp),
+                .height(48.dp),
             colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
             shape = RoundedCornerShape(12.dp)
         ) {
             Text(
-                text = "Kembali ke Beranda",
-                fontSize = 16.sp,
+                text = "Kembali ke Menu Utama",
+                fontSize = 15.sp,
                 fontWeight = FontWeight.Bold
             )
         }
         
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(8.dp))
     }
 }
 
@@ -487,7 +490,7 @@ private suspend fun processAttendance(
     delay(2000) // Simulasi loading
     
     val currentDate = SimpleDateFormat("dd MMMM yyyy", Locale.forLanguageTag("id-ID")).format(Date())
-    val currentTime = SimpleDateFormat("HH:mm WIB", Locale.getDefault()).format(Date())
+    val currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date()) + " WIB"
     val currentTimeStr = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
     val currentHour = currentTimeStr.split(":")[0].toInt()
     val currentMinute = currentTimeStr.split(":")[1].toInt()
@@ -510,6 +513,14 @@ private suspend fun processAttendance(
     
     // Simpan data absensi
     AttendanceStorage.saveAttendance(context, record)
+    android.util.Log.d("AttendanceActivity", "Attendance saved successfully: ${record.id}, type: ${record.type}, date: ${record.date}, time: ${record.time}")
+    
+    // Verifikasi data tersimpan
+    val savedRecords = AttendanceStorage.getAttendanceHistory(context)
+    android.util.Log.d("AttendanceActivity", "Total saved records: ${savedRecords.size}")
+    savedRecords.take(3).forEach { saved ->
+        android.util.Log.d("AttendanceActivity", "Saved record: ${saved.id}, ${saved.type}, ${saved.date}, ${saved.time}")
+    }
     
     // Tutup loading dialog terlebih dahulu
     withContext(Dispatchers.Main) {
@@ -645,13 +656,17 @@ fun FaceDetectionArea(primaryColor: Color, onFaceDetected: () -> Unit) {
     var detectionProgress by remember { mutableFloatStateOf(0f) }
     
     LaunchedEffect(Unit) {
+        android.util.Log.d("AttendanceActivity", "FaceDetectionArea LaunchedEffect started")
         while (detectionProgress < 1f) {
             delay(50)
             detectionProgress += 0.02f
         }
         isDetecting = false
+        android.util.Log.d("AttendanceActivity", "Face detection complete, waiting 500ms before calling onFaceDetected")
         delay(500)
+        android.util.Log.d("AttendanceActivity", "Calling onFaceDetected callback")
         onFaceDetected()
+        android.util.Log.d("AttendanceActivity", "onFaceDetected callback called")
     }
     
     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -738,8 +753,23 @@ fun ConfirmDialog(
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
-                AttendanceDetailRow("Waktu", SimpleDateFormat("HH:mm WIB", Locale.getDefault()).format(Date()))
-                AttendanceDetailRow("Tanggal", SimpleDateFormat("dd MMMM yyyy", Locale.forLanguageTag("id-ID")).format(Date()))
+                // Format waktu dengan try-catch untuk safety
+                val currentTimeFormatted = try {
+                    SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date()) + " WIB"
+                } catch (e: Exception) {
+                    android.util.Log.e("AttendanceActivity", "Error formatting time", e)
+                    "Waktu tidak tersedia"
+                }
+                
+                val currentDateFormatted = try {
+                    SimpleDateFormat("dd MMMM yyyy", Locale.forLanguageTag("id-ID")).format(Date())
+                } catch (e: Exception) {
+                    android.util.Log.e("AttendanceActivity", "Error formatting date", e)
+                    "Tanggal tidak tersedia"
+                }
+                
+                AttendanceDetailRow("Waktu", currentTimeFormatted)
+                AttendanceDetailRow("Tanggal", currentDateFormatted)
                 AttendanceDetailRow("Lokasi", locationName)
                 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -805,18 +835,18 @@ fun SuccessHeaderCard(
 ) {
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(12.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 4.dp)
     ) {
         Column(
-            modifier = Modifier.padding(24.dp),
+            modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
                 modifier = Modifier
-                    .size(80.dp)
+                    .size(56.dp)
                     .clip(CircleShape)
                     .background(successColor.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
@@ -825,27 +855,27 @@ fun SuccessHeaderCard(
                     imageVector = Icons.Default.CheckCircle,
                     contentDescription = "Success",
                     tint = successColor,
-                    modifier = Modifier.size(50.dp)
+                    modifier = Modifier.size(36.dp)
                 )
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             
             Text(
                 text = "Absensi Berhasil!",
-                fontSize = 24.sp,
+                fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
             )
             
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             
             Text(
                 text = if (attendanceType == AttendanceType.CHECK_IN) 
                     "Absensi Masuk telah tercatat" 
                 else 
                     "Absensi Pulang telah tercatat",
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 color = Color.Gray,
                 textAlign = TextAlign.Center
             )
@@ -861,20 +891,20 @@ fun DetailInformationCard(
 ) {
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(12.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 4.dp)
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
+        Column(modifier = Modifier.padding(12.dp)) {
             Text(
                 text = "Detail Absensi",
-                fontSize = 18.sp,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
             )
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             
             ReportDetailRow(
                 icon = Icons.Default.AccessTime,
@@ -883,9 +913,9 @@ fun DetailInformationCard(
                 iconColor = primaryColor
             )
             
-            Spacer(modifier = Modifier.height(12.dp))
-            HorizontalDivider(color = Color(0xFFE0E0E0))
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+            HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.5.dp)
+            Spacer(modifier = Modifier.height(8.dp))
             
             ReportDetailRow(
                 icon = Icons.Default.DateRange,
@@ -894,21 +924,21 @@ fun DetailInformationCard(
                 iconColor = primaryColor
             )
             
-            Spacer(modifier = Modifier.height(12.dp))
-            HorizontalDivider(color = Color(0xFFE0E0E0))
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+            HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.5.dp)
+            Spacer(modifier = Modifier.height(8.dp))
             
             ReportDetailRow(
                 icon = Icons.Default.LocationOn,
                 label = "Lokasi",
                 value = record.location,
                 iconColor = primaryColor,
-                maxLines = 3
+                maxLines = 2
             )
             
-            Spacer(modifier = Modifier.height(12.dp))
-            HorizontalDivider(color = Color(0xFFE0E0E0))
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+            HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.5.dp)
+            Spacer(modifier = Modifier.height(8.dp))
             
             ReportDetailRow(
                 icon = Icons.Default.Face,
@@ -931,20 +961,20 @@ fun StatusCard(
 ) {
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(12.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 4.dp)
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
+        Column(modifier = Modifier.padding(12.dp)) {
             Text(
                 text = "Status",
-                fontSize = 18.sp,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
             )
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             
             if (attendanceType == AttendanceType.CHECK_IN) {
                 StatusRow(
@@ -962,9 +992,9 @@ fun StatusCard(
                 )
             }
             
-            Spacer(modifier = Modifier.height(12.dp))
-            HorizontalDivider(color = Color(0xFFE0E0E0))
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+            HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 0.5.dp)
+            Spacer(modifier = Modifier.height(8.dp))
             
             StatusRow(
                 label = "Status Verifikasi",
@@ -993,20 +1023,20 @@ fun ReportDetailRow(
             contentDescription = null,
             tint = iconColor,
             modifier = Modifier
-                .size(24.dp)
+                .size(20.dp)
                 .padding(top = 2.dp)
         )
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = label,
-                fontSize = 12.sp,
+                fontSize = 11.sp,
                 color = Color.Gray
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = value,
-                fontSize = 14.sp,
+                fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = Color.Black,
                 maxLines = maxLines
@@ -1030,19 +1060,19 @@ fun StatusRow(
             imageVector = icon,
             contentDescription = null,
             tint = color,
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(20.dp)
         )
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = label,
-                fontSize = 12.sp,
+                fontSize = 11.sp,
                 color = Color.Gray
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = value,
-                fontSize = 16.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 color = color
             )
