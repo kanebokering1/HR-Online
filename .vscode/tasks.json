@@ -1,0 +1,21 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "HROES Build Debug APK",
+			"type": "shell",
+			"command": "cd \"C:\\Users\\Aries A\\StudioProjects\\HR-Online\" && .\\gradlew.bat assembleDebug --no-daemon 2>&1",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Gradle assembleDebug",
+			"type": "shell",
+			"command": ".\\gradlew.bat assembleDebug --no-daemon 2>&1",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}

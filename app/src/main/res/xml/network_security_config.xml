@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Network Security Config — allows HTTP cleartext for local Laragon development.
+    Remove or restrict this for production builds.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- Laragon .test virtual host + subdomains (tenant domains) -->
+        <domain includeSubdomains="true">hroes.test</domain>
+        <!-- Android emulator maps host loopback to 10.0.2.2 -->
+        <domain>10.0.2.2</domain>
+        <domain>localhost</domain>
+    </domain-config>
+</network-security-config>

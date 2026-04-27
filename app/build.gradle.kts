@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.hronline"
-        minSdk = 24
+        minSdk = 21
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -42,6 +42,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     packaging {
         resources {
@@ -64,8 +65,22 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
     
+    // Navigation
+    implementation(libs.navigation.compose)
+    
+    // Lottie Animations
+    implementation(libs.lottie.compose)
+    
+    // Image Loading
+    implementation(libs.coil.compose)
+    
     // Play Services Location
     implementation(libs.play.services.location)
+
+    // Retrofit + OkHttp (backend API)
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.gson)
+    implementation(libs.okhttp.logging)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

@@ -1,3 +1,316 @@
 <resources>
-    <string name="app_name">HR Online</string>
+    <!-- App -->
+    <string name="app_name">HROES</string>
+    <string name="app_tagline">HR Operation Enterprise System</string>
+
+    <!-- Common Actions -->
+    <string name="action_save">Simpan</string>
+    <string name="action_cancel">Batal</string>
+    <string name="action_submit">Kirim</string>
+    <string name="action_back">Kembali</string>
+    <string name="action_close">Tutup</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_delete">Hapus</string>
+    <string name="action_search">Cari</string>
+    <string name="action_filter">Filter</string>
+    <string name="action_refresh">Segarkan</string>
+    <string name="action_view_all">Lihat Semua</string>
+    <string name="action_download">Unduh</string>
+    <string name="action_upload">Unggah</string>
+    <string name="action_logout">Keluar</string>
+    <string name="action_login">Masuk</string>
+    <string name="action_confirm">Konfirmasi</string>
+    <string name="action_reject">Tolak</string>
+    <string name="action_approve">Setujui</string>
+    <string name="action_add">Tambah</string>
+
+    <!-- Common Labels -->
+    <string name="label_date">Tanggal</string>
+    <string name="label_time">Waktu</string>
+    <string name="label_status">Status</string>
+    <string name="label_description">Keterangan</string>
+    <string name="label_name">Nama</string>
+    <string name="label_email">Email</string>
+    <string name="label_phone">Nomor Telepon</string>
+    <string name="label_address">Alamat</string>
+    <string name="label_department">Departemen</string>
+    <string name="label_position">Jabatan</string>
+    <string name="label_employee_id">ID Karyawan</string>
+    <string name="label_password">Kata Sandi</string>
+    <string name="label_total">Total</string>
+    <string name="label_notes">Catatan</string>
+    <string name="label_type">Jenis</string>
+    <string name="label_duration">Durasi</string>
+    <string name="label_amount">Jumlah</string>
+    <string name="label_attachment">Lampiran</string>
+    <string name="label_category">Kategori</string>
+    <string name="label_period">Periode</string>
+
+    <!-- Common Status -->
+    <string name="status_pending">Menunggu</string>
+    <string name="status_approved">Disetujui</string>
+    <string name="status_rejected">Ditolak</string>
+    <string name="status_active">Aktif</string>
+    <string name="status_inactive">Tidak Aktif</string>
+    <string name="status_completed">Selesai</string>
+    <string name="status_on_time">Tepat Waktu</string>
+    <string name="status_late">Terlambat</string>
+
+    <!-- Common Messages -->
+    <string name="msg_loading">Memuat…</string>
+    <string name="msg_empty_data">Tidak ada data</string>
+    <string name="msg_no_results">Tidak ada hasil yang ditemukan</string>
+    <string name="msg_success">Berhasil</string>
+    <string name="msg_error">Terjadi kesalahan</string>
+    <string name="msg_network_error">Periksa koneksi internet Anda</string>
+    <string name="msg_saved">Data berhasil disimpan</string>
+    <string name="msg_deleted">Data berhasil dihapus</string>
+    <string name="msg_submitted">Pengajuan berhasil dikirim</string>
+    <string name="msg_confirm_logout">Apakah Anda yakin ingin keluar?</string>
+    <string name="msg_confirm_delete">Apakah Anda yakin ingin menghapus data ini?</string>
+    <string name="msg_required_field">Kolom ini wajib diisi</string>
+    <string name="msg_invalid_email">Format email tidak valid</string>
+    <string name="msg_password_mismatch">Kata sandi tidak cocok</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_home">Beranda</string>
+    <string name="nav_attendance">Absensi</string>
+    <string name="nav_history">Riwayat</string>
+    <string name="nav_profile">Profil</string>
+
+    <!-- Splash Screen -->
+    <string name="splash_loading">Mempersiapkan aplikasi…</string>
+
+    <!-- Login Screen -->
+    <string name="login_title">Selamat Datang</string>
+    <string name="login_subtitle">Masuk ke akun HR Online Anda</string>
+    <string name="login_hint_employee_id">Masukkan ID Karyawan</string>
+    <string name="login_hint_password">Masukkan kata sandi</string>
+    <string name="login_forgot_password">Lupa kata sandi?</string>
+    <string name="login_error_invalid">ID karyawan atau kata sandi salah</string>
+    <string name="login_error_empty_id">ID karyawan tidak boleh kosong</string>
+    <string name="login_error_empty_password">Kata sandi tidak boleh kosong</string>
+
+    <!-- Home Screen -->
+    <string name="home_greeting_morning">Selamat Pagi</string>
+    <string name="home_greeting_afternoon">Selamat Siang</string>
+    <string name="home_greeting_evening">Selamat Sore</string>
+    <string name="home_greeting_night">Selamat Malam</string>
+    <string name="home_today_attendance">Kehadiran Hari Ini</string>
+    <string name="home_quick_menu">Menu Cepat</string>
+    <string name="home_latest_announcements">Pengumuman Terbaru</string>
+    <string name="home_work_summary">Ringkasan Kerja</string>
+    <string name="home_check_in">Absen Masuk</string>
+    <string name="home_check_out">Absen Keluar</string>
+    <string name="home_work_days">Hari Kerja</string>
+    <string name="home_leave_used">Cuti Digunakan</string>
+    <string name="home_overtime_hours">Jam Lembur</string>
+
+    <!-- Attendance Screen -->
+    <string name="attendance_title">Absensi</string>
+    <string name="attendance_check_in">Absen Masuk</string>
+    <string name="attendance_check_out">Absen Keluar</string>
+    <string name="attendance_location">Lokasi Saat Ini</string>
+    <string name="attendance_time">Waktu</string>
+    <string name="attendance_fetching_location">Mengambil lokasi…</string>
+    <string name="attendance_location_unavailable">Lokasi tidak tersedia</string>
+    <string name="attendance_success_check_in">Absen masuk berhasil dicatat</string>
+    <string name="attendance_success_check_out">Absen keluar berhasil dicatat</string>
+    <string name="attendance_already_checked_in">Anda sudah absen masuk hari ini</string>
+    <string name="attendance_already_checked_out">Anda sudah absen keluar hari ini</string>
+    <string name="attendance_office_hours">Jam Kerja</string>
+    <string name="attendance_work_schedule">Jadwal Kerja</string>
+
+    <!-- History Screen -->
+    <string name="history_title">Riwayat Absensi</string>
+    <string name="history_filter_all">Semua</string>
+    <string name="history_filter_present">Hadir</string>
+    <string name="history_filter_late">Terlambat</string>
+    <string name="history_filter_absent">Absen</string>
+    <string name="history_no_records">Belum ada riwayat absensi</string>
+    <string name="history_check_in_time">Waktu Masuk</string>
+    <string name="history_check_out_time">Waktu Keluar</string>
+    <string name="history_work_duration">Durasi Kerja</string>
+    <string name="history_this_month">Bulan Ini</string>
+    <string name="history_days_present">Hari Hadir</string>
+    <string name="history_days_late">Hari Terlambat</string>
+
+    <!-- Profile Screen -->
+    <string name="profile_title">Profil</string>
+    <string name="profile_personal_info">Informasi Pribadi</string>
+    <string name="profile_work_info">Informasi Pekerjaan</string>
+    <string name="profile_join_date">Tanggal Bergabung</string>
+    <string name="profile_employee_type">Tipe Karyawan</string>
+    <string name="profile_supervisor">Atasan Langsung</string>
+    <string name="profile_edit_photo">Ubah Foto</string>
+    <string name="profile_personal_data">Data Diri</string>
+    <string name="profile_calendar">Kalender</string>
+    <string name="profile_leave">Cuti</string>
+    <string name="profile_salary">Slip Gaji</string>
+    <string name="profile_announcement">Pengumuman</string>
+    <string name="profile_overtime">Lembur</string>
+    <string name="profile_permission">Izin/Sakit</string>
+    <string name="profile_notification">Notifikasi</string>
+    <string name="profile_change_password">Ubah Password</string>
+    <string name="profile_reimbursement">Reimbursement</string>
+    <string name="profile_org_structure">Struktur Organisasi</string>
+    <string name="profile_documents">Dokumen</string>
+    <string name="profile_faq">FAQ</string>
+
+    <!-- Personal Data Screen -->
+    <string name="data_diri_title">Data Diri</string>
+    <string name="data_diri_full_name">Nama Lengkap</string>
+    <string name="data_diri_nik">NIK</string>
+    <string name="data_diri_birth_date">Tanggal Lahir</string>
+    <string name="data_diri_birth_place">Tempat Lahir</string>
+    <string name="data_diri_gender">Jenis Kelamin</string>
+    <string name="data_diri_religion">Agama</string>
+    <string name="data_diri_marital_status">Status Perkawinan</string>
+    <string name="data_diri_blood_type">Golongan Darah</string>
+    <string name="data_diri_education">Pendidikan Terakhir</string>
+    <string name="data_diri_male">Laki-laki</string>
+    <string name="data_diri_female">Perempuan</string>
+    <string name="data_diri_single">Belum Menikah</string>
+    <string name="data_diri_married">Menikah</string>
+    <string name="data_diri_divorced">Cerai</string>
+
+    <!-- Calendar Screen -->
+    <string name="calendar_title">Kalender Kerja</string>
+    <string name="calendar_working_day">Hari Kerja</string>
+    <string name="calendar_holiday">Hari Libur</string>
+    <string name="calendar_leave_day">Hari Cuti</string>
+    <string name="calendar_national_holiday">Libur Nasional</string>
+    <string name="calendar_events">Agenda</string>
+
+    <!-- Leave Screen (Cuti) -->
+    <string name="cuti_title">Pengajuan Cuti</string>
+    <string name="cuti_annual">Cuti Tahunan</string>
+    <string name="cuti_sick">Cuti Sakit</string>
+    <string name="cuti_important">Cuti Penting</string>
+    <string name="cuti_remaining">Sisa Cuti</string>
+    <string name="cuti_used">Cuti Digunakan</string>
+    <string name="cuti_total">Total Jatah Cuti</string>
+    <string name="cuti_start_date">Tanggal Mulai</string>
+    <string name="cuti_end_date">Tanggal Selesai</string>
+    <string name="cuti_reason">Alasan Cuti</string>
+    <string name="cuti_days">Hari</string>
+    <string name="cuti_history">Riwayat Cuti</string>
+    <string name="cuti_new_request">Ajukan Cuti Baru</string>
+
+    <!-- Salary Slip Screen (Slip Gaji) -->
+    <string name="slip_gaji_title">Slip Gaji</string>
+    <string name="slip_gaji_basic">Gaji Pokok</string>
+    <string name="slip_gaji_allowance">Tunjangan</string>
+    <string name="slip_gaji_deduction">Potongan</string>
+    <string name="slip_gaji_net">Gaji Bersih</string>
+    <string name="slip_gaji_transport">Tunjangan Transport</string>
+    <string name="slip_gaji_meal">Tunjangan Makan</string>
+    <string name="slip_gaji_health">Tunjangan Kesehatan</string>
+    <string name="slip_gaji_tax">PPh 21</string>
+    <string name="slip_gaji_bpjs">BPJS</string>
+    <string name="slip_gaji_download">Unduh Slip Gaji</string>
+    <string name="slip_gaji_select_month">Pilih Bulan</string>
+
+    <!-- Announcement Screen (Pengumuman) -->
+    <string name="pengumuman_title">Pengumuman</string>
+    <string name="pengumuman_all">Semua</string>
+    <string name="pengumuman_company">Perusahaan</string>
+    <string name="pengumuman_hr">SDM</string>
+    <string name="pengumuman_it">IT</string>
+    <string name="pengumuman_no_announcements">Belum ada pengumuman</string>
+
+    <!-- Overtime Screen (Lembur) -->
+    <string name="lembur_title">Pengajuan Lembur</string>
+    <string name="lembur_date">Tanggal Lembur</string>
+    <string name="lembur_start_time">Waktu Mulai</string>
+    <string name="lembur_end_time">Waktu Selesai</string>
+    <string name="lembur_duration">Durasi Lembur</string>
+    <string name="lembur_reason">Alasan Lembur</string>
+    <string name="lembur_this_month">Lembur Bulan Ini</string>
+    <string name="lembur_total_hours">Total Jam Lembur</string>
+    <string name="lembur_history">Riwayat Lembur</string>
+    <string name="lembur_new_request">Ajukan Lembur Baru</string>
+
+    <!-- Permission/Sick Leave Screen (Izin) -->
+    <string name="izin_title">Izin / Sakit</string>
+    <string name="izin_sick">Sakit</string>
+    <string name="izin_permission">Izin</string>
+    <string name="izin_important_reason">Keperluan Mendesak</string>
+    <string name="izin_doctor_note">Surat Dokter</string>
+    <string name="izin_attach_letter">Lampirkan Surat</string>
+    <string name="izin_history">Riwayat Izin</string>
+    <string name="izin_new_request">Ajukan Izin Baru</string>
+    <string name="izin_start_date">Tanggal Mulai</string>
+    <string name="izin_end_date">Tanggal Selesai</string>
+    <string name="izin_reason">Alasan</string>
+
+    <!-- Notification Screen (Notifikasi) -->
+    <string name="notifikasi_title">Notifikasi</string>
+    <string name="notifikasi_all">Semua</string>
+    <string name="notifikasi_unread">Belum Dibaca</string>
+    <string name="notifikasi_mark_all_read">Tandai Semua Dibaca</string>
+    <string name="notifikasi_empty">Tidak ada notifikasi</string>
+    <string name="notifikasi_today">Hari Ini</string>
+    <string name="notifikasi_yesterday">Kemarin</string>
+    <string name="notifikasi_older">Sebelumnya</string>
+
+    <!-- Change Password Screen (Ubah Password) -->
+    <string name="ubah_password_title">Ubah Kata Sandi</string>
+    <string name="ubah_password_current">Kata Sandi Saat Ini</string>
+    <string name="ubah_password_new">Kata Sandi Baru</string>
+    <string name="ubah_password_confirm">Konfirmasi Kata Sandi Baru</string>
+    <string name="ubah_password_requirements">Minimal 8 karakter, kombinasi huruf dan angka</string>
+    <string name="ubah_password_success">Kata sandi berhasil diubah</string>
+    <string name="ubah_password_error_wrong_current">Kata sandi saat ini salah</string>
+    <string name="ubah_password_error_too_short">Kata sandi minimal 8 karakter</string>
+
+    <!-- Reimbursement Screen -->
+    <string name="reimbursement_title">Reimbursement</string>
+    <string name="reimbursement_new_request">Ajukan Reimbursement</string>
+    <string name="reimbursement_category">Kategori Biaya</string>
+    <string name="reimbursement_amount">Nominal</string>
+    <string name="reimbursement_receipt">Bukti Kwitansi</string>
+    <string name="reimbursement_history">Riwayat Reimbursement</string>
+    <string name="reimbursement_medical">Kesehatan</string>
+    <string name="reimbursement_transport">Transport</string>
+    <string name="reimbursement_meal">Makan</string>
+    <string name="reimbursement_accommodation">Akomodasi</string>
+    <string name="reimbursement_other">Lainnya</string>
+    <string name="reimbursement_pending_amount">Menunggu Persetujuan</string>
+    <string name="reimbursement_approved_amount">Total Disetujui</string>
+
+    <!-- Organization Structure Screen (Struktur Org) -->
+    <string name="struktur_org_title">Struktur Organisasi</string>
+    <string name="struktur_org_director">Direktur</string>
+    <string name="struktur_org_manager">Manajer</string>
+    <string name="struktur_org_staff">Staf</string>
+    <string name="struktur_org_search_employee">Cari karyawan…</string>
+    <string name="struktur_org_total_employees">Total Karyawan</string>
+    <string name="struktur_org_departments">Departemen</string>
+
+    <!-- Documents Screen (Dokumen) -->
+    <string name="dokumen_title">Dokumen</string>
+    <string name="dokumen_my_documents">Dokumen Saya</string>
+    <string name="dokumen_company_docs">Dokumen Perusahaan</string>
+    <string name="dokumen_contracts">Kontrak Kerja</string>
+    <string name="dokumen_certificates">Sertifikat</string>
+    <string name="dokumen_policies">Kebijakan</string>
+    <string name="dokumen_no_documents">Belum ada dokumen</string>
+    <string name="dokumen_download">Unduh</string>
+    <string name="dokumen_preview">Pratinjau</string>
+    <string name="dokumen_upload_new">Unggah Dokumen</string>
+    <string name="dokumen_file_size">Ukuran File</string>
+    <string name="dokumen_last_modified">Terakhir Diubah</string>
+
+    <!-- FAQ Screen -->
+    <string name="faq_title">FAQ</string>
+    <string name="faq_subtitle">Pertanyaan yang Sering Diajukan</string>
+    <string name="faq_search_hint">Cari pertanyaan…</string>
+    <string name="faq_no_results">Tidak ada pertanyaan yang cocok</string>
+    <string name="faq_contact_support">Hubungi Support</string>
+    <string name="faq_all_categories">Semua Kategori</string>
+    <string name="faq_category_attendance">Absensi</string>
+    <string name="faq_category_leave">Cuti</string>
+    <string name="faq_category_salary">Gaji</string>
+    <string name="faq_category_general">Umum</string>
 </resources>

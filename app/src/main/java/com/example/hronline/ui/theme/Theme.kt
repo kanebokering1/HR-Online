@@ -1,46 +1,83 @@
 package com.example.hronline.ui.theme
 
 import android.app.Activity
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+private val LightColorScheme = lightColorScheme(
+    primary = GreenPrimary,
+    onPrimary = TextOnPrimary,
+    primaryContainer = Green100,
+    onPrimaryContainer = GreenDark,
+    secondary = TealAccent,
+    onSecondary = TextOnPrimary,
+    secondaryContainer = TealLight,
+    onSecondaryContainer = TealDark,
+    tertiary = AccentBlue,
+    onTertiary = TextOnPrimary,
+    tertiaryContainer = AccentBlueLight,
+    onTertiaryContainer = AccentBlueDark,
+    background = SurfaceLight,
+    onBackground = TextPrimary,
+    surface = CardWhite,
+    onSurface = TextPrimary,
+    surfaceVariant = SurfaceGreenTint,
+    onSurfaceVariant = TextSecondary,
+    outline = DividerColor,
+    error = AccentRed,
+    onError = TextOnPrimary,
+    errorContainer = AccentRedLight,
+    onErrorContainer = AccentRedDark,
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+private val DarkColorScheme = darkColorScheme(
+    primary = DarkGreenPrimary,
+    onPrimary = DarkSurface,
+    primaryContainer = GreenDark,
+    onPrimaryContainer = GreenLight,
+    secondary = DarkTealAccent,
+    onSecondary = DarkSurface,
+    secondaryContainer = TealDark,
+    onSecondaryContainer = TealLight,
+    tertiary = AccentBlue,
+    onTertiary = DarkSurface,
+    tertiaryContainer = AccentBlueDark,
+    onTertiaryContainer = AccentBlueLight,
+    background = DarkBackground,
+    onBackground = TextOnDark,
+    surface = DarkCard,
+    onSurface = TextOnDark,
+    surfaceVariant = DarkSurface,
+    onSurfaceVariant = TextTertiary,
+    outline = TextTertiary,
+    error = AccentRed,
+    onError = TextOnPrimary,
+    errorContainer = AccentRedDark,
+    onErrorContainer = AccentRedLight,
+)
+
+val HRShapes = Shapes(
+    small = RoundedCornerShape(8.dp),
+    medium = RoundedCornerShape(16.dp),
+    large = RoundedCornerShape(24.dp),
 )
 
 @Composable
-fun SplashTheme(
+fun HROnlineTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
+    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
@@ -48,12 +85,14 @@ fun SplashTheme(
             WindowCompat.setDecorFitsSystemWindows(window, false)
             val insetsController = WindowCompat.getInsetsController(window, view)
             insetsController.isAppearanceLightStatusBars = !darkTheme
+            insetsController.isAppearanceLightNavigationBars = !darkTheme
         }
     }
 
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
+        shapes = HRShapes,
         content = content
     )
 }
