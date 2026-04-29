@@ -14,6 +14,18 @@ class AuthRepository {
         if (email.isBlank() || password.isBlank()) {
             return Result.failure(Exception("Email dan password wajib diisi"))
         }
+
+        // ── LOCAL BYPASS (dev only) ───────────────────────────────────────
+        if (email.trim() == "demo" && password == "demo") {
+            val dummyUser = UserDto(id = "0", name = "Demo User", email = "demo@hroes.test", emailVerifiedAt = null)
+            TokenManager.token     = "local-bypass-token"
+            TokenManager.userName  = dummyUser.name
+            TokenManager.userEmail = dummyUser.email
+            TokenManager.userId    = dummyUser.id
+            return Result.success(dummyUser)
+        }
+        // ─────────────────────────────────────────────────────────────────
+
         return try {
             val response = ApiConfig.apiService.login(LoginRequest(email = email, password = password))
             TokenManager.token     = response.token

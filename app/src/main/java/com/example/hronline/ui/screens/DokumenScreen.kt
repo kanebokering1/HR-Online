@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.hronline.ui.components.*
 import com.example.hronline.ui.theme.*
+import kotlinx.coroutines.launch
 
 data class DokumenItem(
     val id: Int,
@@ -32,6 +33,8 @@ data class DokumenItem(
 fun DokumenScreen(onBack: () -> Unit) {
     var selectedCategory by remember { mutableStateOf("Semua") }
     val categories = listOf("Semua", "Kontrak", "Sertifikat", "SK", "Lainnya")
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     val allDocs = remember {
         listOf(
@@ -48,7 +51,14 @@ fun DokumenScreen(onBack: () -> Unit) {
 
     val filteredDocs = if (selectedCategory == "Semua") allDocs else allDocs.filter { it.category == selectedCategory }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+    ) { innerPadding ->
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding)
+    ) {
         GradientTopBar(title = "Dokumen Saya", onBack = onBack)
 
         // Category filter
@@ -112,12 +122,20 @@ fun DokumenScreen(onBack: () -> Unit) {
                             Text(doc.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                             Text("${doc.type} • ${doc.size} • ${doc.date}", style = MaterialTheme.typography.labelSmall, color = TextTertiary)
                         }
-                        IconButton(onClick = { }) {
+                        IconButton(onClick = {
+                            // Local-only behavior while API integration is skipped.
+                            // Keeps the feature interactive and user-friendly.
+                            val message = "Unduh ${doc.name} (simulasi lokal)"
+                            scope.launch {
+                                snackbarHostState.showSnackbar(message)
+                            }
+                        }) {
                             Icon(Icons.Filled.Download, contentDescription = "Unduh", tint = GreenPrimary)
                         }
                     }
                 }
             }
         }
+    }
     }
 }

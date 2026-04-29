@@ -10,8 +10,8 @@ import com.example.hronline.BuildConfig
 object ApiConfig {
 
     // ── Tenant domain ─────────────────────────────────────────────────────
-    // Change COMPANY_DOMAIN to your Laragon tenant domain, e.g. "demo.hroes.test"
-    const val COMPANY_DOMAIN = "hroes.test"
+    // 10.0.2.2 = host machine IP from Android emulator (maps to 127.0.0.1 on PC)
+    const val COMPANY_DOMAIN = "10.0.2.2"
     const val BASE_URL = "http://$COMPANY_DOMAIN/api/"
 
     // ── Timeouts (seconds) ────────────────────────────────────────────────

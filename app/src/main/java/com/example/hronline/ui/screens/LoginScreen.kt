@@ -31,15 +31,23 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(onLoginSuccess: () -> Unit) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("demo") }
+    var password by remember { mutableStateOf("demo") }
     var passwordVisible by remember { mutableStateOf(false) }
     var rememberMe by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var loginError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+    ) { innerPadding ->
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding)
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -173,7 +181,11 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                             style = MaterialTheme.typography.bodySmall,
                             color = GreenPrimary,
                             fontWeight = FontWeight.Medium,
-                            modifier = Modifier.clickable { },
+                            modifier = Modifier.clickable {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar("Hubungi HR Admin untuk reset password.")
+                                }
+                            },
                         )
                     }
 
@@ -227,5 +239,6 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                 }
             }
         }
+    }
     }
 }

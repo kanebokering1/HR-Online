@@ -29,6 +29,7 @@ fun ProfileScreen(
     onLogout: () -> Unit,
 ) {
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var showAboutDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -79,7 +80,7 @@ fun ProfileScreen(
                 HorizontalDivider(color = DividerColor)
                 ProfileMenuItem(Icons.AutoMirrored.Filled.HelpCenter, "FAQ & Bantuan") { onNavigate(Screen.FAQ.route) }
                 HorizontalDivider(color = DividerColor)
-                ProfileMenuItem(Icons.Filled.Info, "Tentang Aplikasi") { }
+                ProfileMenuItem(Icons.Filled.Info, "Tentang Aplikasi") { showAboutDialog = true }
             }
         }
 
@@ -120,6 +121,21 @@ fun ProfileScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutDialog = false }) { Text("Batal") }
+            },
+        )
+    }
+
+    if (showAboutDialog) {
+        AlertDialog(
+            onDismissRequest = { showAboutDialog = false },
+            title = { Text("Tentang Aplikasi", fontWeight = FontWeight.Bold) },
+            text = {
+                Text(
+                    "HR Online v2.0\nAplikasi self-service karyawan untuk absensi, cuti, izin, lembur, reimbursement, slip gaji, dan informasi internal perusahaan."
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showAboutDialog = false }) { Text("Tutup") }
             },
         )
     }
