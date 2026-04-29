@@ -14,6 +14,11 @@ data class LoginRequest(
     @SerializedName("device_name") val deviceName: String = "hroes-android",
 )
 
+data class GoogleLoginRequest(
+    @SerializedName("id_token") val idToken: String,
+    @SerializedName("device_name") val deviceName: String = "hroes-android-google",
+)
+
 /** Matches Laravel response: { token, user: {...} } */
 data class LoginApiResponse(
     val token: String,

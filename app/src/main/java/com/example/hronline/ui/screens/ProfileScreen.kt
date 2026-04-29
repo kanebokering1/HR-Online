@@ -16,12 +16,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hronline.navigation.Screen
 import com.example.hronline.ui.components.*
 import com.example.hronline.ui.theme.*
+import com.example.hronline.util.BiometricHelper
 
 @Composable
 fun ProfileScreen(
@@ -30,6 +32,9 @@ fun ProfileScreen(
 ) {
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val biometricAvailable = remember { BiometricHelper.isAvailable(context) }
+    var biometricEnabled by remember { mutableStateOf(BiometricHelper.isEnabled(context)) }
 
     Column(
         modifier = Modifier
@@ -78,6 +83,33 @@ fun ProfileScreen(
             Column {
                 ProfileMenuItem(Icons.Filled.Lock, "Ubah Password") { onNavigate(Screen.UbahPassword.route) }
                 HorizontalDivider(color = DividerColor)
+                if (biometricAvailable) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(Icons.Filled.Fingerprint, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(22.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Login Biometrik", style = MaterialTheme.typography.bodyLarge)
+                            Text(
+                                "Gunakan sidik jari atau wajah untuk masuk",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextTertiary,
+                            )
+                        }
+                        Switch(
+                            checked = biometricEnabled,
+                            onCheckedChange = { checked ->
+                                biometricEnabled = checked
+                                BiometricHelper.setEnabled(context, checked)
+                            },
+                        )
+                    }
+                    HorizontalDivider(color = DividerColor)
+                }
                 ProfileMenuItem(Icons.AutoMirrored.Filled.HelpCenter, "FAQ & Bantuan") { onNavigate(Screen.FAQ.route) }
                 HorizontalDivider(color = DividerColor)
                 ProfileMenuItem(Icons.Filled.Info, "Tentang Aplikasi") { showAboutDialog = true }

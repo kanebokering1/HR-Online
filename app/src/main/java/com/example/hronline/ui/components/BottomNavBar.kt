@@ -2,11 +2,9 @@ package com.example.hronline.ui.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Fingerprint
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.*
@@ -25,7 +23,6 @@ data class BottomNavItem(
 
 val bottomNavItems = listOf(
     BottomNavItem("Home", Screen.Home.route, Icons.Filled.Home, Icons.Outlined.Home),
-    BottomNavItem("Absensi", "attendance", Icons.Filled.Fingerprint, Icons.Outlined.Fingerprint),
     BottomNavItem("Riwayat", Screen.History.route, Icons.Filled.History, Icons.Outlined.History),
     BottomNavItem("Profil", Screen.Profile.route, Icons.Filled.Person, Icons.Outlined.Person),
 )

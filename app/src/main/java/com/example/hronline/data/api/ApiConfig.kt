@@ -9,10 +9,11 @@ import com.example.hronline.BuildConfig
 
 object ApiConfig {
 
-    // ── Tenant domain ─────────────────────────────────────────────────────
-    // 10.0.2.2 = host machine IP from Android emulator (maps to 127.0.0.1 on PC)
-    const val COMPANY_DOMAIN = "10.0.2.2"
-    const val BASE_URL = "http://$COMPANY_DOMAIN/api/"
+    // ── Environment (configured via BuildConfig per build type) ───────────
+    // Debug   → http://10.0.2.2/api/         (Laragon local from emulator)
+    // Release → https://hroes.arthacodestudio.com/api/  (production)
+    val BASE_URL: String = BuildConfig.API_BASE_URL
+    val TENANT_DOMAIN: String = BuildConfig.TENANT_DOMAIN
 
     // ── Timeouts (seconds) ────────────────────────────────────────────────
     private const val CONNECT_TIMEOUT = 30L
@@ -35,10 +36,13 @@ object ApiConfig {
             .addInterceptor { chain ->
                 val builder = chain.request().newBuilder()
                     .addHeader("Accept", "application/json")
-                
+                    // X-Tenant header for multi-tenancy (helps backend identify tenant
+                    // even when reverse-proxied or accessed via IP)
+                    .addHeader("X-Tenant", TENANT_DOMAIN)
+
                 // Add Authorization header if token exists
-                TokenManager.token?.let { 
-                    builder.addHeader("Authorization", "Bearer $it") 
+                TokenManager.token?.let {
+                    builder.addHeader("Authorization", "Bearer $it")
                 }
 
                 chain.proceed(builder.build())

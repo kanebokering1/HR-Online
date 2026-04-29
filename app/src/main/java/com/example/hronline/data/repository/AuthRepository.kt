@@ -2,6 +2,7 @@ package com.example.hronline.data.repository
 
 import com.example.hronline.data.api.ApiConfig
 import com.example.hronline.data.api.TokenManager
+import com.example.hronline.data.api.model.GoogleLoginRequest
 import com.example.hronline.data.api.model.LoginRequest
 import com.example.hronline.data.api.model.UserDto
 import org.json.JSONObject
@@ -15,38 +16,67 @@ class AuthRepository {
             return Result.failure(Exception("Email dan password wajib diisi"))
         }
 
-        // ── LOCAL BYPASS (dev only) ───────────────────────────────────────
-        if (email.trim() == "demo" && password == "demo") {
-            val dummyUser = UserDto(id = "0", name = "Demo User", email = "demo@hroes.test", emailVerifiedAt = null)
-            TokenManager.token     = "local-bypass-token"
-            TokenManager.userName  = dummyUser.name
-            TokenManager.userEmail = dummyUser.email
-            TokenManager.userId    = dummyUser.id
-            return Result.success(dummyUser)
+        // ── LOCAL DEMO BYPASS ─────────────────────────────────────────────
+        // Login dummy untuk akses cepat tanpa server. Hapus saat production.
+        if (email.trim().equals("demo", ignoreCase = true) && password == "demo") {
+            val dummy = UserDto(
+                id = "0",
+                name = "Demo User",
+                email = "demo@hroes.test",
+                emailVerifiedAt = null,
+            )
+            persistSession("local-bypass-token", dummy)
+            return Result.success(dummy)
         }
         // ─────────────────────────────────────────────────────────────────
 
         return try {
             val response = ApiConfig.apiService.login(LoginRequest(email = email, password = password))
-            TokenManager.token     = response.token
-            TokenManager.userName  = response.user.name
-            TokenManager.userEmail = response.user.email
-            TokenManager.userId    = response.user.id
+            persistSession(response.token, response.user)
             Result.success(response.user)
         } catch (e: HttpException) {
-            // Parse Laravel JSON error body (e.g. {"message": "These credentials..."})
-            val errorMsg = try {
-                val body = e.response()?.errorBody()?.string()
-                if (!body.isNullOrBlank()) JSONObject(body).optString("message", "Login gagal")
-                else "Login gagal (HTTP ${e.code()})"
-            } catch (_: Exception) {
-                "Login gagal (HTTP ${e.code()})"
-            }
-            Result.failure(Exception(errorMsg))
+            Result.failure(Exception(parseHttpError(e, "Login gagal")))
         } catch (e: UnknownHostException) {
             Result.failure(Exception("Tidak dapat terhubung ke server. Pastikan perangkat terhubung ke jaringan yang sama dengan server."))
         } catch (e: Exception) {
             Result.failure(Exception(parseError(e)))
+        }
+    }
+
+    /**
+     * Authenticate using a Google ID token already obtained from CredentialManager.
+     * Backend looks up the user by Google email — account MUST already be registered
+     * by HRD on the web admin panel; no auto-registration.
+     */
+    suspend fun loginWithGoogle(idToken: String): Result<UserDto> {
+        if (idToken.isBlank()) return Result.failure(Exception("Google ID token kosong"))
+        return try {
+            val response = ApiConfig.apiService.loginWithGoogle(GoogleLoginRequest(idToken = idToken))
+            persistSession(response.token, response.user)
+            Result.success(response.user)
+        } catch (e: HttpException) {
+            Result.failure(Exception(parseHttpError(e, "Login Google gagal")))
+        } catch (e: UnknownHostException) {
+            Result.failure(Exception("Tidak dapat terhubung ke server."))
+        } catch (e: Exception) {
+            Result.failure(Exception(parseError(e)))
+        }
+    }
+
+    private fun persistSession(token: String, user: UserDto) {
+        TokenManager.token     = token
+        TokenManager.userName  = user.name
+        TokenManager.userEmail = user.email
+        TokenManager.userId    = user.id
+    }
+
+    private fun parseHttpError(e: HttpException, fallback: String): String {
+        return try {
+            val body = e.response()?.errorBody()?.string()
+            if (!body.isNullOrBlank()) JSONObject(body).optString("message", fallback)
+            else "$fallback (HTTP ${e.code()})"
+        } catch (_: Exception) {
+            "$fallback (HTTP ${e.code()})"
         }
     }
 

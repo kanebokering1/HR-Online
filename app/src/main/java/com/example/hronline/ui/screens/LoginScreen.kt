@@ -18,11 +18,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.hronline.data.auth.GoogleSignInHelper
 import com.example.hronline.ui.components.HRButton
 import com.example.hronline.ui.components.HRTextField
 import com.example.hronline.ui.theme.*
@@ -31,14 +33,15 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(onLoginSuccess: () -> Unit) {
-    var email by remember { mutableStateOf("demo") }
-    var password by remember { mutableStateOf("demo") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var rememberMe by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var loginError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
@@ -225,6 +228,63 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall,
                         )
+                    }
+
+                    // ── Divider "atau" ─────────────────────────────────
+                    if (GoogleSignInHelper.isConfigured()) {
+                        Spacer(modifier = Modifier.height(20.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            HorizontalDivider(modifier = Modifier.weight(1f))
+                            Text(
+                                "  atau  ",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            HorizontalDivider(modifier = Modifier.weight(1f))
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Google Sign-In button
+                        OutlinedButton(
+                            onClick = {
+                                if (isLoading) return@OutlinedButton
+                                loginError = null
+                                isLoading = true
+                                scope.launch {
+                                    try {
+                                        val tokenResult = GoogleSignInHelper.signIn(context)
+                                        tokenResult.fold(
+                                            onSuccess = { idToken ->
+                                                val result = AuthRepository().loginWithGoogle(idToken)
+                                                isLoading = false
+                                                result.fold(
+                                                    onSuccess = { onLoginSuccess() },
+                                                    onFailure = { e -> loginError = e.message ?: "Login Google gagal" },
+                                                )
+                                            },
+                                            onFailure = { e ->
+                                                isLoading = false
+                                                loginError = e.message ?: "Login Google dibatalkan"
+                                            }
+                                        )
+                                    } catch (e: Exception) {
+                                        isLoading = false
+                                        loginError = e.message ?: "Terjadi kesalahan"
+                                    }
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth().height(52.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            enabled = !isLoading,
+                        ) {
+                            Text(
+                                "Masuk dengan Google",
+                                fontWeight = FontWeight.Medium,
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))

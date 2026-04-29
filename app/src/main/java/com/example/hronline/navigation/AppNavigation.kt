@@ -30,11 +30,18 @@ fun AppNavigation() {
         popExitTransition = { fadeOut(animationSpec = tween(300)) + slideOutHorizontally(targetOffsetX = { 100 }) },
     ) {
         composable(Screen.Splash.route) {
-            SplashScreen(onNavigateToLogin = {
-                navController.navigate(Screen.Login.route) {
-                    popUpTo(Screen.Splash.route) { inclusive = true }
-                }
-            })
+            SplashScreen(
+                onNavigateToLogin = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                },
+                onNavigateToMain = {
+                    navController.navigate(Screen.Main.route) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                },
+            )
         }
 
         composable(Screen.Login.route) {
@@ -131,14 +138,19 @@ fun MainScreen(rootNavController: NavHostController) {
         ) {
             composable(Screen.Home.route) {
                 HomeScreen(
-                    onNavigate = { route -> rootNavController.navigate(route) },
+                    onNavigate = { route ->
+                        // Tab routes belong to bottomNavController; everything else to root
+                        if (route == Screen.History.route || route == Screen.Profile.route || route == Screen.Home.route) {
+                            bottomNavController.navigate(route) {
+                                popUpTo(Screen.Home.route) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        } else {
+                            rootNavController.navigate(route)
+                        }
+                    },
                     onNotificationClick = { rootNavController.navigate(Screen.Notifikasi.route) }
-                )
-            }
-            composable(Screen.Attendance.route.substringBefore("/")) {
-                AttendanceScreen(
-                    attendanceType = "CHECK_IN",
-                    onBack = { bottomNavController.popBackStack() }
                 )
             }
             composable(Screen.History.route) {

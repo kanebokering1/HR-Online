@@ -16,6 +16,9 @@ interface ApiService {
     @POST("v1/auth/login")
     suspend fun login(@Body request: LoginRequest): LoginApiResponse
 
+    @POST("v1/auth/google")
+    suspend fun loginWithGoogle(@Body request: GoogleLoginRequest): LoginApiResponse
+
     @POST("v1/auth/logout")
     suspend fun logout()
 
