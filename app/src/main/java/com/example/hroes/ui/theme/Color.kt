@@ -5,7 +5,7 @@ import com.example.hroes.BuildConfig
 import androidx.compose.ui.graphics.Color
 
 // ═══════════════════════════════════════════
-// HROES v2 — Emerald Green Color System (Flat)
+// BINA HR — Emerald Green Color System
 // ═══════════════════════════════════════════
 
 // ── Emerald Primary Palette ──────────────────

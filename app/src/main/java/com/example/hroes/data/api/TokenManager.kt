@@ -16,7 +16,7 @@ import androidx.security.crypto.MasterKey
  * can reconstruct the correct X-Tenant header without asking the user again.
  */
 object TokenManager {
-    private const val PREFS_NAME        = "hroes_secure_prefs"
+    private const val PREFS_NAME        = "bina_hr_secure_prefs"
     private const val KEY_TOKEN         = "auth_token"
     private const val KEY_USER_NAME     = "user_name"
     private const val KEY_USER_EMAIL    = "user_email"

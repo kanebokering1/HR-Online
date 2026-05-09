@@ -74,7 +74,7 @@ val HRShapes = Shapes(
 )
 
 @Composable
-fun HroesTheme(
+fun BinaHrTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {

@@ -128,7 +128,7 @@ fun SplashScreen(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "HROES",
+                        text = "BINA HR",
                         color = Color.White,
                         fontSize = 32.sp,
                         fontWeight = FontWeight.Bold,
@@ -136,7 +136,7 @@ fun SplashScreen(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "HR Operation Enterprise System",
+                        text = "Platform HR & Payroll Indonesia",
                         color = Color.White.copy(alpha = 0.8f),
                         fontSize = 13.sp,
                         fontFamily = PlusJakartaSans,

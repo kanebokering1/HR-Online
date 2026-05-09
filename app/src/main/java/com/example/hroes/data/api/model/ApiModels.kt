@@ -33,12 +33,12 @@ data class LaravelPaginated<T>(
 data class LoginRequest(
     val email: String,
     val password: String,
-    @SerializedName("device_name") val deviceName: String = "hroes-android",
+    @SerializedName("device_name") val deviceName: String = "bina-hr-android",
 )
 
 data class GoogleLoginRequest(
     @SerializedName("id_token") val idToken: String,
-    @SerializedName("device_name") val deviceName: String = "hroes-android-google",
+    @SerializedName("device_name") val deviceName: String = "bina-hr-android-google",
 )
 
 data class LoginApiResponse(

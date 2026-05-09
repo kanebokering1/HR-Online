@@ -6,7 +6,7 @@ import com.example.hroes.data.api.model.*
 import retrofit2.http.*
 
 /**
- * HROES REST API Service — all /api/v1/ endpoints.
+ * BINA HR REST API Service — all /api/v1/ endpoints.
  * Auth: Sanctum Bearer token (added by ApiConfig interceptor).
  */
 interface ApiService {

@@ -73,7 +73,7 @@ fun TenantSetupScreen(onDomainSaved: () -> Unit) {
                     TokenManager.tenantDomain = domain
                     onDomainSaved()
                 } else {
-                    error = response.message.takeIf { it.isNotBlank() }
+                    error = response.message?.takeIf { it.isNotBlank() }
                         ?: "Kode tidak ditemukan. Periksa kembali kode dari HR admin Anda."
                 }
             } catch (e: retrofit2.HttpException) {

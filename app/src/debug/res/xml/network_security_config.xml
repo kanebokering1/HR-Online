@@ -12,6 +12,7 @@
     </base-config>
     <domain-config cleartextTrafficPermitted="true">
         <!-- Laragon .test virtual host + subdomains (tenant domains) -->
+        <domain includeSubdomains="true">bina-hris.test</domain>
         <domain includeSubdomains="true">hroes.test</domain>
         <!-- Android emulator maps host loopback to 10.0.2.2 -->
         <domain>10.0.2.2</domain>
@@ -19,7 +20,3 @@
         <domain>127.0.0.1</domain>
     </domain-config>
 </network-security-config>
-
-
-
-

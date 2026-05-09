@@ -37,10 +37,10 @@ android {
 
     buildTypes {
         debug {
-            // Pointing debug to PRODUCTION server so we can test against the
-            // real Hostinger database where users are seeded.
-            buildConfigField("String", "API_BASE_URL", "\"https://hroes.arthacodestudio.com/api/\"")
-            buildConfigField("String", "TENANT_DOMAIN", "\"hroes.arthacodestudio.com\"")
+            // Debug → server BINA HR production (app.bina-hris.com = Laravel API gateway)
+            buildConfigField("String", "API_BASE_URL", "\"https://app.bina-hris.com/api/\"")
+            // Multi-tenant build: TENANT_DOMAIN kosong → user input kode perusahaan di TenantSetupScreen
+            buildConfigField("String", "TENANT_DOMAIN", "\"\"")
         }
         release {
             isMinifyEnabled = false
@@ -48,9 +48,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // Production environment — BINA HR
-            buildConfigField("String", "API_BASE_URL", "\"https://bina-hris.com/api/\"")
-            buildConfigField("String", "TENANT_DOMAIN", "\"bina-hris.com\"")
+            // Production environment — BINA HR (app.bina-hris.com = Laravel API gateway)
+            buildConfigField("String", "API_BASE_URL", "\"https://app.bina-hris.com/api/\"")
+            // Multi-tenant build: TENANT_DOMAIN kosong → user input kode perusahaan di TenantSetupScreen
+            buildConfigField("String", "TENANT_DOMAIN", "\"\"")
         }
     }
     compileOptions {

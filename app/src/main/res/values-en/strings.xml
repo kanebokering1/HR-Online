@@ -1,7 +1,7 @@
 <resources>
     <!-- App -->
-    <string name="app_name">HROES</string>
-    <string name="app_tagline">HR Operation Enterprise System</string>
+    <string name="app_name">BINA HR</string>
+    <string name="app_tagline">BINA HR — Indonesia Payroll &amp; HR Platform</string>
 
     <!-- Common Actions -->
     <string name="action_save">Save</string>
@@ -314,7 +314,3 @@
     <string name="faq_category_salary">Salary</string>
     <string name="faq_category_general">General</string>
 </resources>
-
-
-
-
