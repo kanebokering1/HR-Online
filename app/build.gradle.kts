@@ -3,8 +3,9 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.google.services)
 }
 
 // Read GOOGLE_WEB_CLIENT_ID from local.properties (never committed) so the
@@ -16,12 +17,12 @@ val localProperties = Properties().apply {
 val googleWebClientId: String = localProperties.getProperty("GOOGLE_WEB_CLIENT_ID", "")
 
 android {
-    namespace = "com.example.hronline"
+    namespace = "com.example.hroes"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.hronline"
-        minSdk = 21
+        applicationId = "com.bina.hris"
+        minSdk = 23
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -47,9 +48,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // Production environment
-            buildConfigField("String", "API_BASE_URL", "\"https://hroes.arthacodestudio.com/api/\"")
-            buildConfigField("String", "TENANT_DOMAIN", "\"hroes.arthacodestudio.com\"")
+            // Production environment — BINA HR
+            buildConfigField("String", "API_BASE_URL", "\"https://bina-hris.com/api/\"")
+            buildConfigField("String", "TENANT_DOMAIN", "\"bina-hris.com\"")
         }
     }
     compileOptions {
@@ -121,6 +122,17 @@ dependencies {
 
     // Permissions helper for Jetpack Compose
     implementation(libs.accompanist.permissions)
+
+    // EncryptedSharedPreferences (secure token storage)
+    implementation(libs.security.crypto)
+
+    // ViewModel + Lifecycle for Compose
+    implementation(libs.lifecycle.viewmodel.compose)
+    implementation(libs.lifecycle.runtime.ktx)
+
+    // Firebase (FCM push notifications)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

@@ -1,3 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Firebase Web Configuration (for reference or WebView usage) -->
+    <string name="firebase_web_api_key" translatable="false">AIzaSyA4_MzSICNpzk00uVfWAW0Py3sRYGdKz0A</string>
+    <string name="firebase_web_auth_domain" translatable="false">infra-lodge-495402-v6.firebaseapp.com</string>
+    <string name="firebase_web_project_id" translatable="false">infra-lodge-495402-v6</string>
+    <string name="firebase_web_storage_bucket" translatable="false">infra-lodge-495402-v6.firebasestorage.app</string>
+    <string name="firebase_web_messaging_sender_id" translatable="false">352709767770</string>
+    <string name="firebase_web_app_id" translatable="false">1:352709767770:web:ee5298800c855d84de9e63</string>
+    <string name="firebase_web_measurement_id" translatable="false">G-XCEVCE8D3N</string>
 </resources>

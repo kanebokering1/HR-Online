@@ -1,7 +1,7 @@
 <resources>
     <!-- App -->
-    <string name="app_name">HROES</string>
-    <string name="app_tagline">HR Operation Enterprise System</string>
+    <string name="app_name">BINA HR</string>
+    <string name="app_tagline">Platform HR &amp; Payroll untuk Indonesia</string>
 
     <!-- Common Actions -->
     <string name="action_save">Simpan</string>

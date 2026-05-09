@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.bina.hris" />
+                  <option name="mobileSdkAppId" value="1:352709767770:android:3eff957fad90904fde9e63" />
+                  <option name="projectId" value="infra-lodge-495402-v6" />
+                  <option name="projectNumber" value="352709767770" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />
