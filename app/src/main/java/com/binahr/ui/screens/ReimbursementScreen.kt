@@ -2,6 +2,7 @@ package com.binahr.ui.screens
 
 
 import com.binahr.BuildConfig
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -9,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,6 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import java.text.SimpleDateFormat
+import java.util.*
 import com.binahr.ui.components.*
 import com.binahr.ui.theme.*
 import com.binahr.ui.viewmodel.ReimbursementViewModel
@@ -34,6 +38,9 @@ fun ReimbursementScreen(onBack: () -> Unit, vm: ReimbursementViewModel = viewMod
     var categoryExpanded by remember { mutableStateOf(false) }
     var formAmount by remember { mutableStateOf("") }
     var formDate by remember { mutableStateOf("") }
+    var formDateMillis by remember { mutableStateOf<Long?>(null) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    val datePickerState = rememberDatePickerState()
     var formError by remember { mutableStateOf(false) }
 
     val allItems by vm.claims.collectAsStateWithLifecycle()
@@ -218,15 +225,22 @@ fun ReimbursementScreen(onBack: () -> Unit, vm: ReimbursementViewModel = viewMod
                         )
                         OutlinedTextField(
                             value = formDate,
-                            onValueChange = { formDate = it; formError = false },
-                            label = { Text("Tanggal (dd MMM yyyy)") },
+                            onValueChange = {},
+                            readOnly = true,
+                            enabled = false,
+                            label = { Text("Tanggal Pengeluaran") },
+                            trailingIcon = { Icon(Icons.Outlined.CalendarMonth, contentDescription = null) },
                             isError = formError && formDate.isBlank(),
                             shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = GreenPrimary,
-                                focusedLabelColor = GreenPrimary,
+                                disabledBorderColor = if (formError && formDate.isBlank()) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline,
+                                disabledLabelColor = TextSecondary,
+                                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                                disabledTrailingIconColor = GreenPrimary,
                             ),
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showDatePicker = true },
                         )
                         Text(
                             "Nota/kwitansi dapat dilampirkan setelah pengajuan disetujui.",
@@ -245,14 +259,18 @@ fun ReimbursementScreen(onBack: () -> Unit, vm: ReimbursementViewModel = viewMod
                 confirmButton = {
                     Button(
                         onClick = {
-                            if (formTitle.isBlank() || formAmount.isBlank() || formDate.isBlank()) {
+                            val submitDate = formDateMillis?.let {
+                                val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US).also { f -> f.timeZone = TimeZone.getTimeZone("UTC") }
+                                sdf.format(Date(it))
+                            } ?: formDate
+                            if (formTitle.isBlank() || formAmount.isBlank() || submitDate.isBlank()) {
                                 formError = true
                             } else {
                                 vm.submit(
                                     title = formTitle,
                                     category = formCategory,
                                     amount = formAmount.toLongOrNull() ?: 0L,
-                                    date = formDate,
+                                    date = submitDate,
                                 )
                             }
                         },
@@ -268,6 +286,26 @@ fun ReimbursementScreen(onBack: () -> Unit, vm: ReimbursementViewModel = viewMod
                     }
                 },
             )
+        }
+
+        if (showDatePicker) {
+            DatePickerDialog(
+                onDismissRequest = { showDatePicker = false },
+                confirmButton = {
+                    TextButton(onClick = {
+                        datePickerState.selectedDateMillis?.let { ms ->
+                            formDateMillis = ms
+                            val sdf = SimpleDateFormat("dd MMM yyyy", Locale("id", "ID")).also { f -> f.timeZone = TimeZone.getTimeZone("UTC") }
+                            formDate = sdf.format(Date(ms))
+                            formError = false
+                        }
+                        showDatePicker = false
+                    }) { Text("OK") }
+                },
+                dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Batal") } },
+            ) {
+                DatePicker(state = datePickerState)
+            }
         }
     }
 }

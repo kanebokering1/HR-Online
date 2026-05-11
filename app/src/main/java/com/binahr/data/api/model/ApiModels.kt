@@ -127,6 +127,11 @@ data class CompanyDto(
     val address: String?,
 )
 
+data class UpdateProfileRequest(
+    val phone: String? = null,
+    val address: String? = null,
+)
+
 // ═══════════════════════════════════════════════════════════════════
 // ATTENDANCE
 // ═══════════════════════════════════════════════════════════════════
@@ -522,6 +527,10 @@ data class TenantResolveDto(
     val name: String?,
     val domain: String,
 )
+
+// ── Verify Password ───────────────────────────────────────────────────────────
+data class VerifyPasswordRequest(val password: String)
+data class VerifyPasswordResponse(val verified: Boolean)
 
 
 

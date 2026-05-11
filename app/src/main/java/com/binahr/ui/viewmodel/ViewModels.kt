@@ -5,6 +5,7 @@ import com.binahr.BuildConfig
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.binahr.data.api.TokenManager
+import com.binahr.data.api.ApiConfig
 import com.binahr.data.api.model.*
 import com.binahr.data.repository.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -168,6 +169,32 @@ class ProfileViewModel : ViewModel() {
     }
 
     fun clearError() { _error.value = null }
+
+    // ── Self-service profile edit ──────────────────────────────────────────
+
+    private val _saveResult = MutableStateFlow<Result<Unit>?>(null)
+    val saveResult: StateFlow<Result<Unit>?> = _saveResult.asStateFlow()
+
+    fun save(phone: String, address: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            repo.updateProfile(
+                phone   = phone.trim().ifBlank { null },
+                address = address.trim().ifBlank { null },
+            )
+                .onSuccess { emp ->
+                    _employee.value = emp
+                    _saveResult.value = Result.success(Unit)
+                }
+                .onFailure { e ->
+                    _error.value = e.message
+                    _saveResult.value = Result.failure(e)
+                }
+            _isLoading.value = false
+        }
+    }
+
+    fun clearSaveResult() { _saveResult.value = null }
 }
 
 // ─── Cuti (Leave) ────────────────────────────────────────────────────────────
@@ -370,6 +397,24 @@ class SlipGajiViewModel : ViewModel() {
 
     fun clearDetail() { _selectedDetail.value = null }
     fun clearError() { _error.value = null }
+
+    private val _verifyResult = MutableStateFlow<Boolean?>(null)
+    val verifyResult: StateFlow<Boolean?> = _verifyResult.asStateFlow()
+
+    fun verifyPassword(password: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val resp = ApiConfig.apiService.verifyPassword(VerifyPasswordRequest(password))
+                _verifyResult.value = resp.data?.verified == true
+            } catch (e: Exception) {
+                _verifyResult.value = false
+            }
+            _isLoading.value = false
+        }
+    }
+
+    fun clearVerifyResult() { _verifyResult.value = null }
 }
 
 // ─── Pengumuman (Announcements) ───────────────────────────────────────────────

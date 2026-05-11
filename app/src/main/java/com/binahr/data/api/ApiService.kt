@@ -32,6 +32,10 @@ interface ApiService {
     @GET("v1/me/profile")
     suspend fun myProfile(): ApiEnvelope<EmployeeDetailDto>
 
+    /** Update own phone/address — self-service fields only. */
+    @PUT("v1/me/profile")
+    suspend fun updateMyProfile(@Body request: UpdateProfileRequest): ApiEnvelope<EmployeeDetailDto>
+
     // ── Employees ─────────────────────────────────────────────────────────
     @GET("v1/employees")
     suspend fun employees(@Query("page") page: Int = 1): LaravelPaginated<EmployeeDto>
@@ -192,7 +196,7 @@ interface ApiService {
     suspend fun myAssets(
         @Query("page") page: Int = 1,
         @Query("status") status: String? = null,
-    ): ApiEnvelope<LaravelPaginated<AssetAssignmentDto>>
+    ): ApiEnvelope<List<AssetAssignmentDto>>
 
     // ── FAQ ───────────────────────────────────────────────────────────────
     @GET("v1/faq")
@@ -201,6 +205,10 @@ interface ApiService {
     // ── Tenant Resolve — public, no auth required ─────────────────────────
     @GET("v1/tenant/resolve")
     suspend fun resolveTenant(@Query("code") code: String): ApiEnvelope<TenantResolveDto>
+
+    // ── Verify Password ───────────────────────────────────────────────────
+    @POST("v1/me/verify-password")
+    suspend fun verifyPassword(@Body body: VerifyPasswordRequest): ApiEnvelope<VerifyPasswordResponse>
 }
 
 

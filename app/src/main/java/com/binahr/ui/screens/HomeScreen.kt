@@ -90,32 +90,6 @@ fun HomeScreen(
         },
     )
 
-    val currentTime = remember { mutableStateOf("") }
-    val currentSeconds = remember { mutableStateOf("") }
-    val currentDate = remember { mutableStateOf("") }
-    val greeting = remember { mutableStateOf("Selamat Pagi") }
-    val greetingEmoji = remember { mutableStateOf("☀") }
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            val now = Date()
-            val cal = Calendar.getInstance().apply { time = now }
-            val hour = cal.get(Calendar.HOUR_OF_DAY)
-            val (g, e) = when (hour) {
-                in 4..10  -> "Selamat Pagi"  to "\u2600"
-                in 11..14 -> "Selamat Siang" to "\u2600"
-                in 15..17 -> "Selamat Sore"  to "\u2600"
-                else      -> "Selamat Malam" to "\u263D"
-            }
-            greeting.value = g
-            greetingEmoji.value = e
-            currentTime.value    = SimpleDateFormat("HH:mm",  Locale.getDefault()).format(now)
-            currentSeconds.value = SimpleDateFormat(":ss",    Locale.getDefault()).format(now)
-            currentDate.value    = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.forLanguageTag("id-ID")).format(now)
-            kotlinx.coroutines.delay(1000)
-        }
-    }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -192,12 +166,7 @@ fun HomeScreen(
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text(
-                                text = "${greeting.value} ${greetingEmoji.value}",
-                                color = Color.White.copy(alpha = 0.85f),
-                                fontSize = 12.sp,
-                                fontFamily = PlusJakartaSans,
-                            )
+                            LiveGreetingText()
                             Text(
                                 text = displayName,
                                 color = Color.White,
@@ -267,11 +236,7 @@ fun HomeScreen(
                             modifier = Modifier.size(14.dp),
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = currentDate.value,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        LiveDateText()
                     }
                     StatusBadge(
                         text = when {
@@ -289,41 +254,8 @@ fun HomeScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Live clock â€” big
-                Row(
-                    verticalAlignment = Alignment.Bottom,
-                ) {
-                    Text(
-                        text = currentTime.value,
-                        fontSize = 44.sp,
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = PlusJakartaSans,
-                        color = OrangePrimary,
-                    )
-                    Text(
-                        text = currentSeconds.value,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        fontFamily = PlusJakartaSans,
-                        color = OrangeLight,
-                        modifier = Modifier.padding(bottom = 6.dp),
-                    )
-                    Spacer(modifier = Modifier.weight(1f))
-                    Icon(
-                        Icons.Outlined.LocationOn,
-                        contentDescription = null,
-                        tint = TextTertiary,
-                        modifier = Modifier.size(14.dp),
-                    )
-                    Spacer(modifier = Modifier.width(2.dp))
-                    Text(
-                        "Kantor Pusat",
-                        fontSize = 11.sp,
-                        color = TextTertiary,
-                        fontFamily = PlusJakartaSans,
-                        modifier = Modifier.padding(bottom = 8.dp),
-                    )
-                }
+                // Live clock – isolated composable to avoid full-screen recompose
+                LiveClockRow()
 
                 Spacer(modifier = Modifier.height(14.dp))
 
@@ -468,24 +400,7 @@ fun HomeScreen(
         // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         SectionHeader(title = "Menu Akses Cepat")
 
-        val menuItems = listOf(
-            MenuGridItem("Data Diri", Icons.Outlined.Person, AccentBlue, AccentBlueLight, Screen.DataDiri.route),
-            MenuGridItem("History", Icons.Outlined.History, OrangePrimary, OrangeSurface, Screen.History.route),
-            MenuGridItem("Kalender", Icons.Outlined.CalendarMonth, AccentPurple, AccentPurpleLight, Screen.Kalender.route),
-            MenuGridItem("Cuti", Icons.Outlined.BeachAccess, AccentOrange, AccentOrangeLight, Screen.Cuti.route),
-            MenuGridItem("Slip Gaji", Icons.Outlined.AccountBalanceWallet, OrangeHover, OrangeSurface, Screen.SlipGaji.route),
-            MenuGridItem("Lembur", Icons.Outlined.MoreTime, AccentAmber, AccentAmberLight, Screen.Lembur.route),
-            MenuGridItem("Izin/Sakit", Icons.Outlined.LocalHospital, AccentRed, AccentRedLight, Screen.Cuti.route),
-            MenuGridItem("Reimburse", Icons.Outlined.Receipt, AccentIndigo, AccentIndigoLight, Screen.Reimbursement.route),
-            MenuGridItem("Pengumuman", Icons.Outlined.Campaign, AccentPink, AccentPinkLight, Screen.Pengumuman.route),
-            MenuGridItem("Organisasi", Icons.Outlined.AccountTree, AccentCyan, AccentCyanLight, Screen.StrukturOrg.route),
-            MenuGridItem("Dokumen", Icons.Outlined.Description, AccentBrown, AccentBrownLight, Screen.Dokumen.route),
-            MenuGridItem("FAQ", Icons.Outlined.HelpOutline, TextTertiary, SurfaceLight, Screen.FAQ.route),
-            MenuGridItem("Persetujuan", Icons.Outlined.HowToReg, OrangePrimary, OrangeSurface, Screen.Approvals.route),
-            MenuGridItem("Performa", Icons.Outlined.Leaderboard, AccentAmber, AccentAmberLight, Screen.Performance.route),
-            MenuGridItem("Jadwal Shift", Icons.Outlined.Schedule, AccentBlue, AccentBlueLight, Screen.JadwalShift.route),
-            MenuGridItem("Aset Saya", Icons.Outlined.Inventory2, AccentOrange, AccentOrangeLight, Screen.Asset.route),
-        )
+        val menuItems = homeMenuItems
 
         Column(modifier = Modifier.padding(horizontal = 20.dp)) {
             menuItems.chunked(4).forEach { row ->
@@ -561,6 +476,22 @@ private data class MenuGridItem(
     val iconColor: Color,
     val bgColor: Color,
     val route: String,
+)
+
+private val homeMenuItems: List<MenuGridItem> = listOf(
+    MenuGridItem("Data Diri", Icons.Outlined.Person, AccentBlue, AccentBlueLight, Screen.DataDiri.route),
+    MenuGridItem("Kalender", Icons.Outlined.CalendarMonth, AccentPurple, AccentPurpleLight, Screen.Kalender.route),
+    MenuGridItem("Cuti & Izin", Icons.Outlined.BeachAccess, AccentOrange, AccentOrangeLight, Screen.Cuti.route),
+    MenuGridItem("Slip Gaji", Icons.Outlined.AccountBalanceWallet, OrangeHover, OrangeSurface, Screen.SlipGaji.route),
+    MenuGridItem("Lembur", Icons.Outlined.MoreTime, AccentAmber, AccentAmberLight, Screen.Lembur.route),
+    MenuGridItem("Reimburse", Icons.Outlined.Receipt, AccentIndigo, AccentIndigoLight, Screen.Reimbursement.route),
+    MenuGridItem("Organisasi", Icons.Outlined.AccountTree, AccentCyan, AccentCyanLight, Screen.StrukturOrg.route),
+    MenuGridItem("Dokumen", Icons.Outlined.Description, AccentBrown, AccentBrownLight, Screen.Dokumen.route),
+    MenuGridItem("FAQ", Icons.Outlined.HelpOutline, TextTertiary, SurfaceLight, Screen.FAQ.route),
+    MenuGridItem("Persetujuan", Icons.Outlined.HowToReg, OrangePrimary, OrangeSurface, Screen.Approvals.route),
+    MenuGridItem("Performa", Icons.Outlined.Leaderboard, AccentAmber, AccentAmberLight, Screen.Performance.route),
+    MenuGridItem("Jadwal Shift", Icons.Outlined.Schedule, AccentBlue, AccentBlueLight, Screen.JadwalShift.route),
+    MenuGridItem("Aset Saya", Icons.Outlined.Inventory2, AccentOrange, AccentOrangeLight, Screen.Asset.route),
 )
 
 
@@ -761,5 +692,95 @@ private fun AnnouncementCard(title: String, date: String, preview: String, accen
                 )
             }
         }
+    }
+}
+
+// ─── Live clock composables (isolated to prevent HomeScreen-wide recompose) ───
+
+@Composable
+private fun LiveGreetingText() {
+    var greeting by remember { mutableStateOf("Selamat Pagi") }
+    var emoji by remember { mutableStateOf("\u2600") }
+    LaunchedEffect(Unit) {
+        while (true) {
+            val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+            val (g, e) = when (hour) {
+                in 4..10  -> "Selamat Pagi"  to "\u2600"
+                in 11..14 -> "Selamat Siang" to "\u2600"
+                in 15..17 -> "Selamat Sore"  to "\u2600"
+                else      -> "Selamat Malam" to "\u263D"
+            }
+            greeting = g
+            emoji = e
+            kotlinx.coroutines.delay(60_000)
+        }
+    }
+    Text(
+        text = "$greeting $emoji",
+        color = Color.White.copy(alpha = 0.85f),
+        fontSize = 12.sp,
+        fontFamily = PlusJakartaSans,
+    )
+}
+
+@Composable
+private fun LiveDateText() {
+    var currentDate by remember { mutableStateOf("") }
+    LaunchedEffect(Unit) {
+        while (true) {
+            currentDate = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.forLanguageTag("id-ID")).format(Date())
+            kotlinx.coroutines.delay(60_000)
+        }
+    }
+    Text(
+        text = currentDate,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+@Composable
+private fun LiveClockRow() {
+    var currentTime by remember { mutableStateOf("") }
+    var currentSeconds by remember { mutableStateOf("") }
+    LaunchedEffect(Unit) {
+        while (true) {
+            val now = Date()
+            currentTime    = SimpleDateFormat("HH:mm", Locale.getDefault()).format(now)
+            currentSeconds = SimpleDateFormat(":ss",   Locale.getDefault()).format(now)
+            kotlinx.coroutines.delay(1000)
+        }
+    }
+    Row(verticalAlignment = Alignment.Bottom) {
+        Text(
+            text = currentTime,
+            fontSize = 44.sp,
+            fontWeight = FontWeight.Bold,
+            fontFamily = PlusJakartaSans,
+            color = OrangePrimary,
+        )
+        Text(
+            text = currentSeconds,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.SemiBold,
+            fontFamily = PlusJakartaSans,
+            color = OrangeLight,
+            modifier = Modifier.padding(bottom = 6.dp),
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        Icon(
+            Icons.Outlined.LocationOn,
+            contentDescription = null,
+            tint = TextTertiary,
+            modifier = Modifier.size(14.dp),
+        )
+        Spacer(modifier = Modifier.width(2.dp))
+        Text(
+            "Kantor Pusat",
+            fontSize = 11.sp,
+            color = TextTertiary,
+            fontFamily = PlusJakartaSans,
+            modifier = Modifier.padding(bottom = 8.dp),
+        )
     }
 }

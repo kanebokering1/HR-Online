@@ -17,6 +17,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.binahr.data.api.TokenManager
+import androidx.compose.ui.platform.LocalContext
+import com.binahr.data.AttendanceStorage
 import com.binahr.ui.components.BottomNavBar
 import com.binahr.ui.components.BottomNavItem
 import com.binahr.ui.screens.*
@@ -203,12 +205,14 @@ fun MainScreen(rootNavController: NavHostController) {
             }
             composable(Screen.Profile.route) {
                 val scope = rememberCoroutineScope()
+                val context = LocalContext.current
                 ProfileScreen(
                     onNavigate = { route -> rootNavController.navigate(route) },
                     onLogout = {
                         scope.launch {
                             com.binahr.data.repository.AuthRepository().logout()
                         }
+                        AttendanceStorage.clearAll(context)
                         // Navigate back to TenantSetup so the user can switch
                         // companies on logout, or directly to Login if domain is saved.
                         val hasDomain    = !com.binahr.data.api.TokenManager.tenantDomain.isNullOrBlank()

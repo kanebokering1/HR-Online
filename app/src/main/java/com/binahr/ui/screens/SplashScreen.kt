@@ -179,7 +179,7 @@ fun SplashScreen(
                 .padding(bottom = 48.dp),
         ) {
             Text(
-                text = "v2.0",
+                text = "v${com.binahr.BuildConfig.VERSION_NAME}",
                 color = TextTertiary,
                 fontSize = 12.sp,
                 fontFamily = PlusJakartaSans,

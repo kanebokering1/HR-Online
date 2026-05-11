@@ -53,6 +53,27 @@ fun CutiScreen(onBack: () -> Unit, vm: CutiViewModel = viewModel()) {
             timeZone = TimeZone.getTimeZone("UTC")
         }.format(Date(ms))
     }
+    // Format ISO-8601 API date string (e.g. "2026-05-12T00:00:00.000000Z") → "dd MMM yyyy"
+    fun formatApiDate(iso: String?): String {
+        if (iso.isNullOrBlank()) return "-"
+        return try {
+            val dateStr = iso.take(10) // "yyyy-MM-dd"
+            SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).apply {
+                timeZone = TimeZone.getTimeZone("UTC")
+            }.parse(dateStr)?.let {
+                SimpleDateFormat("dd MMM yyyy", Locale.forLanguageTag("id-ID")).format(it)
+            } ?: iso
+        } catch (e: Exception) { iso }
+    }
+    // Localized label for leave type key
+    fun leaveTypeLabel(key: String?): String = when (key?.lowercase()) {
+        "annual"    -> "Cuti Tahunan"
+        "sick"      -> "Cuti Sakit"
+        "maternity" -> "Cuti Melahirkan"
+        "personal"  -> "Keperluan Penting"
+        "unpaid"    -> "Cuti Tidak Berbayar"
+        else        -> key?.replaceFirstChar { it.uppercase() } ?: "-"
+    }
 
     val applications by vm.applications.collectAsStateWithLifecycle()
     val balances by vm.balances.collectAsStateWithLifecycle()
@@ -153,7 +174,7 @@ fun CutiScreen(onBack: () -> Unit, vm: CutiViewModel = viewModel()) {
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                             ) {
-                                Text(item.leaveType, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                                Text(leaveTypeLabel(item.leaveType), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                                 StatusBadge(
                                     text = item.approvalState,
                                     type = when (item.approvalState.lowercase()) {
@@ -167,7 +188,7 @@ fun CutiScreen(onBack: () -> Unit, vm: CutiViewModel = viewModel()) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Filled.CalendarMonth, null, modifier = Modifier.size(16.dp), tint = TextTertiary)
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("${item.startDate} - ${item.endDate}", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                Text("${formatApiDate(item.startDate)} - ${formatApiDate(item.endDate)}", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text("(${item.totalDays} hari)", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium, color = AccentBlue)
                             }

@@ -2,12 +2,14 @@ package com.binahr.ui.screens
 
 
 import com.binahr.BuildConfig
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -17,7 +19,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.binahr.ui.components.*
 import com.binahr.ui.theme.*
@@ -28,22 +34,99 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun SlipGajiScreen(onBack: () -> Unit, vm: SlipGajiViewModel = viewModel()) {
+    val context = LocalContext.current
+    var isVerified by remember { mutableStateOf(false) }
+    var passwordInput by remember { mutableStateOf("") }
+    var showPassword by remember { mutableStateOf(false) }
+    var passwordError by remember { mutableStateOf(false) }
+
+    val verifyResult by vm.verifyResult.collectAsStateWithLifecycle()
+    val isLoading by vm.isLoading.collectAsStateWithLifecycle()
+
+    LaunchedEffect(verifyResult) {
+        when (verifyResult) {
+            true  -> { isVerified = true; vm.clearVerifyResult() }
+            false -> { passwordError = true; vm.clearVerifyResult() }
+            null  -> {}
+        }
+    }
+
+    // ── Password gate ─────────────────────────────────────────────────────────
+    if (!isVerified) {
+        AlertDialog(
+            onDismissRequest = onBack,
+            title = { Text("Masukkan Password", fontWeight = FontWeight.Bold, fontFamily = PlusJakartaSans) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Slip gaji bersifat rahasia. Masukkan password Anda untuk melanjutkan.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                    )
+                    OutlinedTextField(
+                        value = passwordInput,
+                        onValueChange = { passwordInput = it; passwordError = false },
+                        label = { Text("Password") },
+                        isError = passwordError,
+                        supportingText = if (passwordError) { { Text("Password salah. Coba lagi.") } } else null,
+                        singleLine = true,
+                        visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        trailingIcon = {
+                            IconButton(onClick = { showPassword = !showPassword }) {
+                                Icon(
+                                    if (showPassword) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                                    contentDescription = null,
+                                )
+                            }
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = GreenPrimary,
+                            focusedLabelColor = GreenPrimary,
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { if (passwordInput.isNotBlank()) vm.verifyPassword(passwordInput) },
+                    enabled = passwordInput.isNotBlank() && !isLoading,
+                    colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary),
+                ) { if (isLoading) CircularProgressIndicator(Modifier.size(16.dp), color = Color.White, strokeWidth = 2.dp) else Text("Konfirmasi") }
+            },
+            dismissButton = {
+                TextButton(onClick = onBack) { Text("Batal") }
+            },
+        )
+        return
+    }
+
+    // ── Main content (shown only after password verified) ─────────────────────
     var selectedYear by remember { mutableIntStateOf(java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)) }
+    var selectedMonth by remember { mutableStateOf<Int?>(null) }
 
     val allSlips by vm.slips.collectAsStateWithLifecycle()
-    val isLoading by vm.isLoading.collectAsStateWithLifecycle()
     val error by vm.error.collectAsStateWithLifecycle()
 
     val years = allSlips.mapNotNull {
-        it.periodYear
-            ?: it.periodLabel?.substringAfterLast('/')?.trimEnd()?.toIntOrNull()
+        it.periodYear ?: it.periodLabel?.substringAfterLast('/')?.trimEnd()?.toIntOrNull()
     }.distinct().sorted().ifEmpty { listOf(selectedYear - 1, selectedYear) }
 
-    val slipList = allSlips.filter { slip ->
-        val y = slip.periodYear
-            ?: slip.periodLabel?.substringAfterLast('/')?.trimEnd()?.toIntOrNull()
+    val yearSlips = allSlips.filter { slip ->
+        val y = slip.periodYear ?: slip.periodLabel?.substringAfterLast('/')?.trimEnd()?.toIntOrNull()
         y == selectedYear
     }
+
+    val months = yearSlips.mapNotNull { it.periodMonth }.distinct().sorted()
+
+    val slipList = if (selectedMonth != null)
+        yearSlips.filter { it.periodMonth == selectedMonth }
+    else
+        yearSlips
+
+    val totalNet = remember(slipList) { slipList.sumOf { it.netSalary.toLong() } }
 
     Column(modifier = Modifier.fillMaxSize()) {
         GradientTopBar(title = "Slip Gaji", onBack = onBack)
@@ -56,7 +139,7 @@ fun SlipGajiScreen(onBack: () -> Unit, vm: SlipGajiViewModel = viewModel()) {
             items(years) { year ->
                 FilterChip(
                     selected = year == selectedYear,
-                    onClick = { selectedYear = year },
+                    onClick = { selectedYear = year; selectedMonth = null },
                     label = { Text("$year", fontFamily = PlusJakartaSans) },
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = GreenPrimary,
@@ -66,16 +149,51 @@ fun SlipGajiScreen(onBack: () -> Unit, vm: SlipGajiViewModel = viewModel()) {
             }
         }
 
+        // Month chips
+        if (months.isNotEmpty()) {
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                item {
+                    FilterChip(
+                        selected = selectedMonth == null,
+                        onClick = { selectedMonth = null },
+                        label = { Text("Semua", fontFamily = PlusJakartaSans) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = GreenPrimary,
+                            selectedLabelColor = Color.White,
+                        ),
+                    )
+                }
+                items(months) { m ->
+                    FilterChip(
+                        selected = m == selectedMonth,
+                        onClick = { selectedMonth = m },
+                        label = { Text(slipMonthShortName(m), fontFamily = PlusJakartaSans) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = GreenPrimary,
+                            selectedLabelColor = Color.White,
+                        ),
+                    )
+                }
+            }
+        }
+
         // Total Summary
         HRCard(
             modifier = Modifier.padding(horizontal = 16.dp),
             gradientBorder = Brush.horizontalGradient(listOf(GreenPrimary, TealAccent)),
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("Total Penghasilan $selectedYear", style = MaterialTheme.typography.bodySmall, color = TextTertiary)
+                Text(
+                    "Total Take Home Pay $selectedYear" + (selectedMonth?.let { " – ${slipMonthShortName(it)}" } ?: ""),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextTertiary,
+                )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = slipList.sumOf { it.netSalary.toLong() }.toRupiah(),
+                    text = totalNet.toRupiah(),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = GreenPrimary,
@@ -104,47 +222,79 @@ fun SlipGajiScreen(onBack: () -> Unit, vm: SlipGajiViewModel = viewModel()) {
                 },
             )
         } else {
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            items(slipList.reversed()) { item ->
-                HRCard {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Column {
-                                Text(item.periodLabel ?: "-", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                items(slipList.reversed()) { item ->
+                    HRCard {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Column {
+                                    Text(item.periodLabel ?: "-", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                                }
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    StatusBadge(text = "Dibayar", type = BadgeType.SUCCESS)
+                                    IconButton(
+                                        onClick = {
+                                            val shareText = buildSlipShareText(item)
+                                            val intent = Intent(Intent.ACTION_SEND).apply {
+                                                type = "text/plain"
+                                                putExtra(Intent.EXTRA_SUBJECT, "Slip Gaji ${item.periodLabel ?: ""}")
+                                                putExtra(Intent.EXTRA_TEXT, shareText)
+                                            }
+                                            context.startActivity(Intent.createChooser(intent, "Bagikan Slip Gaji"))
+                                        },
+                                        modifier = Modifier.size(32.dp),
+                                    ) {
+                                        Icon(Icons.Filled.Share, contentDescription = "Bagikan", tint = GreenPrimary, modifier = Modifier.size(18.dp))
+                                    }
+                                }
                             }
-                            StatusBadge(text = "Dibayar", type = BadgeType.SUCCESS)
-                        }
-                        Spacer(modifier = Modifier.height(12.dp))
-                        GajiRow("Gaji Bruto", item.grossSalary.toLong(), GreenPrimary)
-                        GajiRow("PPh21", -item.pph21TerAmount.toLong(), AccentRed)
-                        GajiRow("BPJS (Karyawan)", -item.bpjsEmployeeAmount.toLong(), AccentOrange)
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = DividerColor)
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                        ) {
-                            Text("Take Home Pay", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
-                            Text(
-                                item.netSalary.toLong().toRupiah(),
-                                fontWeight = FontWeight.Bold,
-                                color = GreenPrimary,
-                                style = MaterialTheme.typography.bodyLarge,
-                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            GajiRow("Gaji Bruto", item.grossSalary.toLong(), GreenPrimary)
+                            GajiRow("PPh21", -item.pph21TerAmount.toLong(), AccentRed)
+                            GajiRow("BPJS (Karyawan)", -item.bpjsEmployeeAmount.toLong(), AccentOrange)
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = DividerColor)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                Text("Take Home Pay", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
+                                Text(
+                                    item.netSalary.toLong().toRupiah(),
+                                    fontWeight = FontWeight.Bold,
+                                    color = GreenPrimary,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                )
+                            }
                         }
                     }
                 }
             }
         }
-        }  // end else (slips loaded)
     }
+}
+
+private fun slipMonthShortName(month: Int): String = when (month) {
+    1 -> "Jan"; 2 -> "Feb"; 3 -> "Mar"; 4 -> "Apr"; 5 -> "Mei"; 6 -> "Jun"
+    7 -> "Jul"; 8 -> "Ags"; 9 -> "Sep"; 10 -> "Okt"; 11 -> "Nov"; 12 -> "Des"
+    else -> "$month"
+}
+
+private fun buildSlipShareText(item: com.binahr.data.api.model.PayrollSlipDto): String = buildString {
+    appendLine("=== Slip Gaji ===")
+    appendLine("Periode  : ${item.periodLabel ?: "-"}")
+    appendLine("Bruto    : ${item.grossSalary.toLong()}")
+    appendLine("PPh21    : ${item.pph21TerAmount.toLong()}")
+    appendLine("BPJS     : ${item.bpjsEmployeeAmount.toLong()}")
+    appendLine("Take Home: ${item.netSalary.toLong()}")
+    append("=================")
 }
 
 @Composable

@@ -8,7 +8,7 @@ class AssetRepository {
     suspend fun getMyAssets(status: String? = null): Result<List<AssetAssignmentDto>> = try {
         val envelope = ApiConfig.apiService.myAssets(status = status)
         if (envelope.success) {
-            Result.success(envelope.data?.data ?: emptyList())
+            Result.success(envelope.data ?: emptyList())
         } else {
             Result.failure(Exception(envelope.message ?: "Gagal memuat aset"))
         }

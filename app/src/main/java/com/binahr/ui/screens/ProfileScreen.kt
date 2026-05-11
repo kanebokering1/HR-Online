@@ -185,7 +185,7 @@ fun ProfileScreen(
             title = { Text("Tentang Aplikasi", fontWeight = FontWeight.Bold) },
             text = {
                 Text(
-                    "HR Online v2.0\nAplikasi self-service karyawan untuk absensi, cuti, izin, lembur, reimbursement, slip gaji, dan informasi internal perusahaan."
+                    "HR Online v${com.binahr.BuildConfig.VERSION_NAME}\nAplikasi self-service karyawan untuk absensi, cuti, izin, lembur, reimbursement, slip gaji, dan informasi internal perusahaan."
                 )
             },
             confirmButton = {

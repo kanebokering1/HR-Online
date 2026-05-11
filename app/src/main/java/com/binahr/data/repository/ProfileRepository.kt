@@ -40,4 +40,15 @@ class ProfileRepository {
     } catch (e: Exception) {
         Result.failure(e)
     }
+
+    suspend fun updateProfile(phone: String?, address: String?): Result<EmployeeDetailDto> = try {
+        val envelope = ApiConfig.apiService.updateMyProfile(UpdateProfileRequest(phone = phone, address = address))
+        if (envelope.success) {
+            Result.success(envelope.data ?: throw Exception("Respon server kosong"))
+        } else {
+            Result.failure(Exception(envelope.message ?: "Gagal memperbarui profil"))
+        }
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
 }

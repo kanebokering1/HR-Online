@@ -5,6 +5,8 @@ import com.binahr.BuildConfig
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -52,11 +54,15 @@ fun KalenderScreen(onBack: () -> Unit, vm: KalenderViewModel = viewModel()) {
 
     // API holidays mapped by day-of-month for current month
     val holidayEvents = remember(holidays, month, year) {
-        val prefix = String.format("%04d-%02d", year, month + 1)
-        holidays.filter { it.date.startsWith(prefix) }
-            .associate { h ->
-                h.date.substringAfterLast("-").toIntOrNull() to h.name
-            }.filterKeys { it != null }.mapKeys { it.key!! }
+        try {
+            val prefix = String.format("%04d-%02d", year, month + 1)
+            holidays.filter { it.date.startsWith(prefix) }
+                .associate { h ->
+                    h.date.substringAfterLast("-").toIntOrNull() to h.name
+                }.filterKeys { it != null }.mapKeys { it.key!! }
+        } catch (e: Exception) {
+            emptyMap()
+        }
     }
     // fallback static events if no API data
     val events = holidayEvents.ifEmpty {
@@ -69,7 +75,9 @@ fun KalenderScreen(onBack: () -> Unit, vm: KalenderViewModel = viewModel()) {
     Column(modifier = Modifier.fillMaxSize()) {
         GradientTopBar(title = "Kalender", onBack = onBack)
 
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState())) {
             // Month navigation
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -120,7 +128,7 @@ fun KalenderScreen(onBack: () -> Unit, vm: KalenderViewModel = viewModel()) {
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .aspectRatio(1f)
+                                    .height(48.dp)
                                     .padding(2.dp),
                                 contentAlignment = Alignment.Center,
                             ) {

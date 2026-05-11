@@ -3,8 +3,10 @@ package com.binahr.ui.screens
 
 import com.binahr.BuildConfig
 import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Build
 import android.graphics.Bitmap
+import androidx.core.content.ContextCompat
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -60,8 +62,8 @@ fun AttendanceScreen(
     var capturedFile by remember { mutableStateOf<File?>(null) }
     var capturedBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var capturedBase64 by remember { mutableStateOf<String?>(null) }
-    // Check-in requires selfie; check-out does not.
-    val selfieRequired = type == AttendanceType.CHECK_IN
+    // Both check-in and check-out require a selfie photo.
+    val selfieRequired = true
     val selfieReady = !selfieRequired || capturedFile != null
 
     val isLoading by vm.isLoading.collectAsStateWithLifecycle()
@@ -93,8 +95,17 @@ fun AttendanceScreen(
         }
     }
 
+    // Camera permission state — drives whether SelfieCameraCard is shown
+    var hasCameraPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+
     // Camera permission launcher
-    val cameraPermLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { _ -> }
+    val cameraPermLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        hasCameraPermission = granted
+    }
 
     // Storage permission launcher (only needed for API 23-28 for gallery save)
     val storagePermLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { _ -> }
@@ -114,8 +125,8 @@ fun AttendanceScreen(
         } else {
             permLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
         }
-        // Request camera permission upfront.
-        if (selfieRequired) {
+        // Request camera permission upfront if not yet granted.
+        if (selfieRequired && !hasCameraPermission) {
             cameraPermLauncher.launch(Manifest.permission.CAMERA)
         }
         // Request storage permission for gallery save on Android < 10.
@@ -246,20 +257,55 @@ fun AttendanceScreen(
 
                     // Selfie camera (only for check-in)
                     if (selfieRequired) {
-                        SelfieCameraCard(
-                            captured = capturedFile,
-                            capturedBitmap = capturedBitmap,
-                            onCaptured = { file, base64 ->
-                                capturedFile = file
-                                capturedBase64 = base64
-                                capturedBitmap = CameraHelper.loadSelfie(file)
-                            },
-                            onRetake = {
-                                capturedFile = null
-                                capturedBase64 = null
-                                capturedBitmap = null
-                            },
-                        )
+                        if (hasCameraPermission) {
+                            SelfieCameraCard(
+                                captured = capturedFile,
+                                capturedBitmap = capturedBitmap,
+                                onCaptured = { file, base64 ->
+                                    capturedFile = file
+                                    capturedBase64 = base64
+                                    capturedBitmap = CameraHelper.loadSelfie(file)
+                                },
+                                onRetake = {
+                                    capturedFile = null
+                                    capturedBase64 = null
+                                    capturedBitmap = null
+                                },
+                            )
+                        } else {
+                            // Camera permission was denied — show a prompt to re-request
+                            HRCard {
+                                Column(
+                                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                ) {
+                                    Icon(
+                                        Icons.Filled.CameraAlt,
+                                        contentDescription = null,
+                                        tint = OrangePrimary,
+                                        modifier = Modifier.size(40.dp),
+                                    )
+                                    Spacer(Modifier.height(8.dp))
+                                    Text(
+                                        "Izin Kamera Diperlukan",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                    )
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(
+                                        "Foto selfie wajib untuk check-in. Izinkan kamera agar absensi dapat dilanjutkan.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = TextSecondary,
+                                    )
+                                    Spacer(Modifier.height(12.dp))
+                                    OutlinedButton(
+                                        onClick = { cameraPermLauncher.launch(Manifest.permission.CAMERA) },
+                                    ) {
+                                        Text("Izinkan Kamera")
+                                    }
+                                }
+                            }
+                        }
                     }
 
                     // Submit button
