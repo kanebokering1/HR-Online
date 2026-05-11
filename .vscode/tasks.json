@@ -2,9 +2,9 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "HROES Build Debug APK",
+			"label": "binahr Build Debug APK",
 			"type": "shell",
-			"command": "cd \"C:\\Users\\Aries A\\StudioProjects\\HR-Online\" && .\\gradlew.bat assembleDebug --no-daemon 2>&1",
+			"command": "cd \"C:\\Users\\itsup\\AndroidStudioProjects\\binahr\" && .\\gradlew.bat assembleDebug --no-daemon 2>&1",
 			"isBackground": false,
 			"problemMatcher": [],
 			"group": "build"

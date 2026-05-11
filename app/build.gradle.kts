@@ -17,7 +17,7 @@ val localProperties = Properties().apply {
 val googleWebClientId: String = localProperties.getProperty("GOOGLE_WEB_CLIENT_ID", "")
 
 android {
-    namespace = "com.example.hroes"
+    namespace = "com.binahr"
     compileSdk = 35
 
     defaultConfig {
@@ -43,7 +43,8 @@ android {
             buildConfigField("String", "TENANT_DOMAIN", "\"\"")
         }
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -52,6 +53,14 @@ android {
             buildConfigField("String", "API_BASE_URL", "\"https://app.bina-hris.com/api/\"")
             // Multi-tenant build: TENANT_DOMAIN kosong → user input kode perusahaan di TenantSetupScreen
             buildConfigField("String", "TENANT_DOMAIN", "\"\"")
+        }
+    }
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("arm64-v8a", "armeabi-v7a", "x86_64")
+            isUniversalApk = false
         }
     }
     compileOptions {

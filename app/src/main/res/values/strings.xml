@@ -83,7 +83,7 @@
 
     <!-- Login Screen -->
     <string name="login_title">Selamat Datang</string>
-    <string name="login_subtitle">Masuk ke akun HR Online Anda</string>
+    <string name="login_subtitle">Masuk ke akun BINA HR Anda</string>
     <string name="login_hint_employee_id">Masukkan ID Karyawan</string>
     <string name="login_hint_password">Masukkan kata sandi</string>
     <string name="login_forgot_password">Lupa kata sandi?</string>
