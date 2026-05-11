@@ -1,13 +1,13 @@
-package com.example.hroes
+package com.binahr
 
 
 import android.app.Application
 import android.util.Log
-import com.example.hroes.data.api.TokenManager
+import com.binahr.data.api.TokenManager
 import com.google.firebase.FirebaseApp
 import com.google.firebase.messaging.FirebaseMessaging
 
-class HroesApplication : Application() {
+class BinahrApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         // Initialize encrypted token storage before any API call.
@@ -22,32 +22,10 @@ class HroesApplication : Application() {
                     TokenManager.fcmToken = fcmToken
                 }
             } else {
-                Log.w("HroesApplication", "FirebaseApp is not initialized. Notifications will be disabled. Please add google-services.json to the app folder.")
+                Log.w("BinahrApplication", "FirebaseApp is not initialized. Notifications will be disabled. Please add google-services.json to the app folder.")
             }
         } catch (e: Exception) {
-            Log.e("HroesApplication", "Error initializing Firebase: ${e.message}")
+            Log.e("BinahrApplication", "Error initializing Firebase: ${e.message}")
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
