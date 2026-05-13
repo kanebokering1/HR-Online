@@ -24,6 +24,11 @@
         android:theme="@style/Theme.BinaHr"
         tools:targetApi="31">
 
+        <!-- Google Maps API Key — set MAPS_API_KEY in local.properties (never commit) -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

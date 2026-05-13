@@ -3,6 +3,7 @@ package com.binahr.data.api
 
 import com.binahr.BuildConfig
 import com.binahr.data.api.model.*
+import okhttp3.MultipartBody
 import retrofit2.http.*
 
 /**
@@ -32,9 +33,18 @@ interface ApiService {
     @GET("v1/me/profile")
     suspend fun myProfile(): ApiEnvelope<EmployeeDetailDto>
 
-    /** Update own phone/address — self-service fields only. */
+    /** Update own phone/address — @deprecated, use submitProfileChangeRequests. */
     @PUT("v1/me/profile")
     suspend fun updateMyProfile(@Body request: UpdateProfileRequest): ApiEnvelope<EmployeeDetailDto>
+
+    @GET("v1/me/profile-change-requests")
+    suspend fun getMyProfileChangeRequests(): ApiEnvelope<List<ProfileChangeRequestDto>>
+
+    @POST("v1/me/profile-change-requests")
+    suspend fun submitProfileChangeRequests(@Body body: SubmitProfileChangeRequestsBody): ApiEnvelope<SubmitProfileChangeResult>
+
+    @PUT("v1/me/fcm-token")
+    suspend fun updateFcmToken(@Body request: FcmTokenRequest): ApiEnvelope<Unit>
 
     // ── Employees ─────────────────────────────────────────────────────────
     @GET("v1/employees")
@@ -104,12 +114,23 @@ interface ApiService {
         @Body request: ReimbursementItemRequest,
     ): ApiEnvelope<Unit>
 
+    @Multipart
+    @POST("v1/reimbursements/{id}/attachments")
+    suspend fun addReimbursementAttachment(
+        @Path("id") id: String,
+        @Part file: okhttp3.MultipartBody.Part,
+    ): ApiEnvelope<Unit>
+
     @POST("v1/reimbursements/{id}/submit")
     suspend fun submitReimbursement(@Path("id") id: String): ApiEnvelope<Unit>
 
     // ── Payroll ───────────────────────────────────────────────────────────
     @GET("v1/payroll/slips")
-    suspend fun payrollSlips(@Query("page") page: Int = 1): LaravelPaginated<PayrollSlipDto>
+    suspend fun payrollSlips(
+        @Query("page") page: Int = 1,
+        @Query("year") year: Int? = null,
+        @Query("month") month: Int? = null,
+    ): LaravelPaginated<PayrollSlipDto>
 
     @GET("v1/payroll/slips/{id}")
     suspend fun payrollSlipDetail(@Path("id") id: String): ApiEnvelope<PayrollSlipDetailDto>
@@ -117,6 +138,10 @@ interface ApiService {
     // ── Companies ─────────────────────────────────────────────────────────
     @GET("v1/companies")
     suspend fun companies(): List<CompanyDto>
+
+    // ── Tenant Settings (geofence config) ─────────────────────────────────
+    @GET("v1/settings")
+    suspend fun tenantSettings(): ApiEnvelope<TenantSettingsDto>
 
     // ── Calendar & Holidays ───────────────────────────────────────────────
     @GET("v1/company/holidays")

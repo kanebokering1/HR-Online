@@ -22,7 +22,7 @@ import com.binahr.ui.viewmodel.ApprovalViewModel
 import com.binahr.util.DateTimeUtils
 
 @Composable
-fun ApprovalsScreen(onBack: () -> Unit, vm: ApprovalViewModel = viewModel()) {
+fun ApprovalsScreen(onBack: () -> Unit, onNavigateDetail: (String) -> Unit = {}, vm: ApprovalViewModel = viewModel()) {
     val approvals by vm.approvals.collectAsStateWithLifecycle()
     val isLoading by vm.isLoading.collectAsStateWithLifecycle()
     val error by vm.error.collectAsStateWithLifecycle()
@@ -37,7 +37,7 @@ fun ApprovalsScreen(onBack: () -> Unit, vm: ApprovalViewModel = viewModel()) {
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        GradientTopBar(title = "Persetujuan", onBack = onBack)
+        BinaTopBar(title = "Persetujuan", onBack = onBack)
 
         // Status filter chips
         Row(
@@ -61,23 +61,11 @@ fun ApprovalsScreen(onBack: () -> Unit, vm: ApprovalViewModel = viewModel()) {
         }
 
         error?.let { msg ->
-            Card(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
-            ) {
-                Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.ErrorOutline, null, tint = MaterialTheme.colorScheme.error)
-                    Spacer(Modifier.width(8.dp))
-                    Text(msg, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
-                    IconButton(onClick = { vm.clearError() }) { Icon(Icons.Filled.Close, null) }
-                }
-            }
+            InfoCallout(message = msg, type = CalloutType.ERROR, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
         }
 
         if (isLoading && approvals.isEmpty()) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = GreenPrimary)
-            }
+            SkeletonListScreen()
         } else if (approvals.isEmpty()) {
             EmptyState(
                 title = "Tidak Ada Data",
@@ -94,7 +82,7 @@ fun ApprovalsScreen(onBack: () -> Unit, vm: ApprovalViewModel = viewModel()) {
                     var showNotesDialog by remember { mutableStateOf<String?>(null) } // "approve" or "reject"
                     var notes by remember { mutableStateOf("") }
 
-                    HRCard {
+                    HRCard(onClick = { onNavigateDetail(item.id) }) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),

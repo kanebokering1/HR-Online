@@ -27,26 +27,14 @@ fun JadwalShiftScreen(onBack: () -> Unit, vm: KalenderViewModel = viewModel()) {
     val error by vm.error.collectAsStateWithLifecycle()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        GradientTopBar(title = "Jadwal Shift", onBack = onBack)
+        BinaTopBar(title = "Jadwal Shift", onBack = onBack)
 
         error?.let { msg ->
-            Card(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
-            ) {
-                Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.ErrorOutline, null, tint = MaterialTheme.colorScheme.error)
-                    Spacer(Modifier.width(8.dp))
-                    Text(msg, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
-                    IconButton(onClick = { vm.clearError() }) { Icon(Icons.Filled.Close, null) }
-                }
-            }
+            InfoCallout(message = msg, type = CalloutType.ERROR, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
         }
 
         if (isLoading && shiftAssignments.isEmpty()) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = OrangePrimary)
-            }
+            SkeletonListScreen()
         } else if (shiftAssignments.isEmpty()) {
             EmptyState(
                 title = "Belum Ada Jadwal",

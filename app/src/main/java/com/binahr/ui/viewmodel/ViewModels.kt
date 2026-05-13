@@ -56,6 +56,7 @@ class HomeViewModel : ViewModel() {
 
 class AttendanceViewModel : ViewModel() {
     private val repo = AttendanceRepository()
+    private val settingsRepo = SettingsRepository()
 
     private val _checkInResult = MutableStateFlow<Result<AttendanceLogDto>?>(null)
     val checkInResult: StateFlow<Result<AttendanceLogDto>?> = _checkInResult.asStateFlow()
@@ -63,8 +64,57 @@ class AttendanceViewModel : ViewModel() {
     private val _checkOutResult = MutableStateFlow<Result<AttendanceLogDto>?>(null)
     val checkOutResult: StateFlow<Result<AttendanceLogDto>?> = _checkOutResult.asStateFlow()
 
+    private val _correctionResult = MutableStateFlow<Result<Unit>?>(null)
+    val correctionResult: StateFlow<Result<Unit>?> = _correctionResult.asStateFlow()
+
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
+    // Geofence settings from tenant
+    private val _geofenceEnabled = MutableStateFlow(false)
+    val geofenceEnabled: StateFlow<Boolean> = _geofenceEnabled.asStateFlow()
+
+    private val _officeLat = MutableStateFlow(0.0)
+    val officeLat: StateFlow<Double> = _officeLat.asStateFlow()
+
+    private val _officeLng = MutableStateFlow(0.0)
+    val officeLng: StateFlow<Double> = _officeLng.asStateFlow()
+
+    private val _officeRadius = MutableStateFlow(100)
+    val officeRadius: StateFlow<Int> = _officeRadius.asStateFlow()
+
+    // Attendance logs (for correction flow — load logs for a specific date)
+    private val _logsForDate = MutableStateFlow<List<AttendanceLogDto>>(emptyList())
+    val logsForDate: StateFlow<List<AttendanceLogDto>> = _logsForDate.asStateFlow()
+
+    init { loadSettings() }
+
+    private fun loadSettings() {
+        viewModelScope.launch {
+            settingsRepo.getTenantSettings().onSuccess { settings ->
+                val geo = settings.geofence
+                _geofenceEnabled.value = geo.enabled
+                if (geo.enabled) {
+                    _officeLat.value = geo.officeLat
+                    _officeLng.value = geo.officeLng
+                    _officeRadius.value = geo.officeRadius
+                }
+            }
+        }
+    }
+
+    fun loadLogsForDate(date: String) {
+        viewModelScope.launch {
+            repo.getLogs(1).onSuccess { paginated ->
+                _logsForDate.value = paginated.data.filter {
+                    it.clockInAt?.startsWith(date) == true
+                }
+            }.onFailure { _error.value = it.message }
+        }
+    }
 
     fun checkIn(lat: Double, lon: Double, address: String, selfieBase64: String? = null) {
         viewModelScope.launch {
@@ -82,9 +132,25 @@ class AttendanceViewModel : ViewModel() {
         }
     }
 
+    fun submitCorrection(logId: String, clockInAt: String, clockOutAt: String?, reason: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _correctionResult.value = repo.submitCorrection(
+                AttendanceCorrectionRequest(logId, clockInAt, clockOutAt, reason)
+            )
+            _correctionResult.value?.onFailure { _error.value = it.message }
+            _isLoading.value = false
+        }
+    }
+
     fun clearResults() {
         _checkInResult.value = null
         _checkOutResult.value = null
+    }
+
+    fun clearCorrectionResult() {
+        _correctionResult.value = null
+        _error.value = null
     }
 }
 
@@ -373,16 +439,29 @@ class SlipGajiViewModel : ViewModel() {
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
+    // Period filter — null means "all"
+    private val _selectedYear = MutableStateFlow<Int?>(null)
+    val selectedYear: StateFlow<Int?> = _selectedYear.asStateFlow()
+
+    private val _selectedMonth = MutableStateFlow<Int?>(null)
+    val selectedMonth: StateFlow<Int?> = _selectedMonth.asStateFlow()
+
     init { load() }
 
     fun load() {
         viewModelScope.launch {
             _isLoading.value = true
-            repo.getSlips()
+            repo.getSlips(year = _selectedYear.value, month = _selectedMonth.value)
                 .onSuccess { _slips.value = it.data }
                 .onFailure { _error.value = it.message }
             _isLoading.value = false
         }
+    }
+
+    fun selectPeriod(year: Int?, month: Int?) {
+        _selectedYear.value = year
+        _selectedMonth.value = month
+        load()
     }
 
     fun loadDetail(id: String) {
@@ -635,10 +714,10 @@ class PerformanceViewModel : ViewModel() {
         }
     }
 
-    fun submitReview(cycleId: String, score: Double, notes: String? = null) {
+    fun submitReview(cycleId: String, score: Double, summary: String? = null) {
         viewModelScope.launch {
             _isLoading.value = true
-            _submitResult.value = repo.submitReview(SubmitPerformanceReviewRequest(cycleId, score, notes))
+            _submitResult.value = repo.submitReview(SubmitPerformanceReviewRequest(cycleId, score, summary))
             if (_submitResult.value?.isSuccess == true) loadDetail(cycleId)
             _isLoading.value = false
         }
@@ -782,5 +861,78 @@ class AssetViewModel : ViewModel() {
         }
     }
 
+    fun clearError() { _error.value = null }
+}
+
+// ─── Profile Change Requests ──────────────────────────────────────────────────
+
+// ─── Recruitment ─────────────────────────────────────────────────────────────
+
+class RecruitmentViewModel : ViewModel() {
+    private val repo = RecruitmentRepository()
+
+    private val _postings = MutableStateFlow<List<JobPostingDto>>(emptyList())
+    val postings: StateFlow<List<JobPostingDto>> = _postings.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
+    init { load() }
+
+    fun load() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            repo.getJobPostings()
+                .onSuccess { _postings.value = it }
+                .onFailure { _error.value = it.message }
+            _isLoading.value = false
+        }
+    }
+
+    fun clearError() { _error.value = null }
+}
+
+// ─── Profile Change Requests ──────────────────────────────────────────────────
+
+class ProfileChangeRequestViewModel : ViewModel() {
+    private val repo = ProfileRepository()
+
+    private val _requests = MutableStateFlow<List<ProfileChangeRequestDto>>(emptyList())
+    val requests: StateFlow<List<ProfileChangeRequestDto>> = _requests.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _submitResult = MutableStateFlow<Result<SubmitProfileChangeResult>?>(null)
+    val submitResult: StateFlow<Result<SubmitProfileChangeResult>?> = _submitResult.asStateFlow()
+
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
+    init { load() }
+
+    fun load() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            repo.getProfileChangeRequests()
+                .onSuccess { _requests.value = it }
+                .onFailure { _error.value = it.message }
+            _isLoading.value = false
+        }
+    }
+
+    fun submit(changes: List<FieldChange>) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _submitResult.value = repo.submitProfileChangeRequests(changes)
+            if (_submitResult.value?.isSuccess == true) load()
+            _isLoading.value = false
+        }
+    }
+
+    fun clearSubmitResult() { _submitResult.value = null }
     fun clearError() { _error.value = null }
 }

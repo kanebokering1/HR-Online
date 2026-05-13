@@ -49,7 +49,7 @@ fun DokumenScreen(
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
-            GradientTopBar(title = "Dokumen Saya", onBack = onBack)
+            BinaTopBar(title = "Dokumen Saya", onBack = onBack)
 
             error?.let { msg ->
                 InfoCallout(message = msg, type = CalloutType.ERROR, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
@@ -74,9 +74,7 @@ fun DokumenScreen(
             }
 
             if (isLoading) {
-                Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = GreenPrimary)
-                }
+                SkeletonListScreen()
             } else if (filteredDocs.isEmpty()) {
                 EmptyState(
                     title = "Tidak ada dokumen",

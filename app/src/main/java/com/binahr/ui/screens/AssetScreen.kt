@@ -36,7 +36,7 @@ fun AssetScreen(
     val error       by vm.error.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        GradientTopBar(title = "Aset Saya", onBack = onBack)
+        BinaTopBar(title = "Aset Saya", onBack = onBack)
 
             error?.let { msg ->
                 InfoCallout(message = msg, type = CalloutType.ERROR, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
@@ -65,9 +65,7 @@ fun AssetScreen(
 
         when {
             isLoading -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = GreenPrimary)
-                }
+                SkeletonListScreen()
             }
             assignments.isEmpty() -> {
                 EmptyState(

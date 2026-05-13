@@ -75,7 +75,7 @@ fun HistoryScreen(onBack: () -> Unit, vm: HistoryViewModel = viewModel()) {
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        GradientTopBar(title = "Riwayat Absensi", onBack = onBack.takeIf { true })
+        BinaTopBar(title = "Riwayat Absensi", onBack = onBack)
 
         // Month chips
         LazyRow(
@@ -113,9 +113,7 @@ fun HistoryScreen(onBack: () -> Unit, vm: HistoryViewModel = viewModel()) {
 
         // Loading indicator
         if (isLoading && apiLogs.isEmpty()) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = GreenPrimary)
-            }
+            SkeletonListScreen()
         }
         // API-based attendance list
         else if (useApiData) {

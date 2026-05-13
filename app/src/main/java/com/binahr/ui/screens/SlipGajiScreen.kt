@@ -129,7 +129,7 @@ fun SlipGajiScreen(onBack: () -> Unit, vm: SlipGajiViewModel = viewModel()) {
     val totalNet = remember(slipList) { slipList.sumOf { it.netSalary.toLong() } }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        GradientTopBar(title = "Slip Gaji", onBack = onBack)
+        BinaTopBar(title = "Slip Gaji", onBack = onBack)
 
         // Year chips
         LazyRow(
@@ -205,9 +205,7 @@ fun SlipGajiScreen(onBack: () -> Unit, vm: SlipGajiViewModel = viewModel()) {
 
         // Slip List
         if (isLoading && allSlips.isEmpty()) {
-            Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = GreenPrimary)
-            }
+            SkeletonListScreen()
         } else if (allSlips.isEmpty() && error != null) {
             EmptyState(
                 title = "Gagal Memuat Slip",

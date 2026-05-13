@@ -29,38 +29,19 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ReimbursementScreen(onBack: () -> Unit, vm: ReimbursementViewModel = viewModel()) {
+fun ReimbursementScreen(onBack: () -> Unit, onAjukanReimbursement: () -> Unit = {}, onNavigateDetail: (String) -> Unit = {}, vm: ReimbursementViewModel = viewModel()) {
     var selectedFilter by remember { mutableStateOf("Semua") }
     val filters = listOf("Semua", "Transportasi", "Makan", "Kesehatan", "Lainnya")
-    var showForm by remember { mutableStateOf(false) }
-    var formTitle by remember { mutableStateOf("") }
-    var formCategory by remember { mutableStateOf("Transportasi") }
-    var categoryExpanded by remember { mutableStateOf(false) }
-    var formAmount by remember { mutableStateOf("") }
-    var formDate by remember { mutableStateOf("") }
-    var formDateMillis by remember { mutableStateOf<Long?>(null) }
-    var showDatePicker by remember { mutableStateOf(false) }
-    val datePickerState = rememberDatePickerState()
-    var formError by remember { mutableStateOf(false) }
 
     val allItems by vm.claims.collectAsStateWithLifecycle()
     val isLoading by vm.isLoading.collectAsStateWithLifecycle()
-    val submitResult by vm.submitResult.collectAsStateWithLifecycle()
-
-    LaunchedEffect(submitResult) {
-        submitResult?.onSuccess {
-            showForm = false
-            formTitle = ""; formAmount = ""; formDate = ""
-            vm.clearSubmitResult()
-        }
-    }
 
     val filteredItems = if (selectedFilter == "Semua") allItems
         else allItems.filter { it.title.contains(selectedFilter, ignoreCase = true) }
     val totalApproved = allItems.filter { it.approvalState.equals("approved", ignoreCase = true) }.sumOf { it.amount }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        GradientTopBar(title = "Reimbursement", onBack = onBack)
+        BinaTopBar(title = "Reimbursement", onBack = onBack)
 
         // Total card
         HRCard(
@@ -99,7 +80,7 @@ fun ReimbursementScreen(onBack: () -> Unit, vm: ReimbursementViewModel = viewMod
 
         HRButton(
             text = "Ajukan Reimbursement",
-            onClick = { showForm = true },
+            onClick = { onAjukanReimbursement() },
             modifier = Modifier.padding(horizontal = 16.dp),
         )
 
@@ -112,7 +93,7 @@ fun ReimbursementScreen(onBack: () -> Unit, vm: ReimbursementViewModel = viewMod
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             items(filteredItems) { item ->
-                HRCard {
+                HRCard(onClick = { onNavigateDetail(item.id) }) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -152,182 +133,5 @@ fun ReimbursementScreen(onBack: () -> Unit, vm: ReimbursementViewModel = viewMod
             }
         }
 
-        // ── Form Dialog ───────────────────────────────────────────────
-        if (showForm) {
-            AlertDialog(
-                onDismissRequest = { showForm = false },
-                title = {
-                    Text(
-                        "Ajukan Reimbursement",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = PlusJakartaSans,
-                    )
-                },
-                text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        OutlinedTextField(
-                            value = formTitle,
-                            onValueChange = { formTitle = it; formError = false },
-                            label = { Text("Keterangan Pengeluaran") },
-                            isError = formError && formTitle.isBlank(),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = GreenPrimary,
-                                focusedLabelColor = GreenPrimary,
-                            ),
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                        // Category dropdown
-                        ExposedDropdownMenuBox(
-                            expanded = categoryExpanded,
-                            onExpandedChange = { categoryExpanded = it },
-                        ) {
-                            OutlinedTextField(
-                                value = formCategory,
-                                onValueChange = {},
-                                readOnly = true,
-                                label = { Text("Kategori") },
-                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(categoryExpanded) },
-                                shape = RoundedCornerShape(12.dp),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = GreenPrimary,
-                                    focusedLabelColor = GreenPrimary,
-                                ),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .menuAnchor(),
-                            )
-                            ExposedDropdownMenu(
-                                expanded = categoryExpanded,
-                                onDismissRequest = { categoryExpanded = false },
-                            ) {
-                                listOf("Transportasi", "Makan", "Kesehatan", "Akomodasi", "Lainnya").forEach { cat ->
-                                    DropdownMenuItem(
-                                        text = { Text(cat, fontFamily = PlusJakartaSans) },
-                                        onClick = { formCategory = cat; categoryExpanded = false },
-                                    )
-                                }
-                            }
-                        }
-                        OutlinedTextField(
-                            value = formAmount,
-                            onValueChange = { formAmount = it.filter { c -> c.isDigit() }; formError = false },
-                            label = { Text("Jumlah (Rp)") },
-                            prefix = { Text("Rp ") },
-                            isError = formError && formAmount.isBlank(),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = GreenPrimary,
-                                focusedLabelColor = GreenPrimary,
-                            ),
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                        OutlinedTextField(
-                            value = formDate,
-                            onValueChange = {},
-                            readOnly = true,
-                            enabled = false,
-                            label = { Text("Tanggal Pengeluaran") },
-                            trailingIcon = { Icon(Icons.Outlined.CalendarMonth, contentDescription = null) },
-                            isError = formError && formDate.isBlank(),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                disabledBorderColor = if (formError && formDate.isBlank()) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline,
-                                disabledLabelColor = TextSecondary,
-                                disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                                disabledTrailingIconColor = GreenPrimary,
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { showDatePicker = true },
-                        )
-                        Text(
-                            "Nota/kwitansi dapat dilampirkan setelah pengajuan disetujui.",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextTertiary,
-                        )
-                        if (formError) {
-                            Text(
-                                "Semua kolom wajib diisi",
-                                color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.labelSmall,
-                            )
-                        }
-                    }
-                },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            val submitDate = formDateMillis?.let {
-                                val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US).also { f -> f.timeZone = TimeZone.getTimeZone("UTC") }
-                                sdf.format(Date(it))
-                            } ?: formDate
-                            if (formTitle.isBlank() || formAmount.isBlank() || submitDate.isBlank()) {
-                                formError = true
-                            } else {
-                                vm.submit(
-                                    title = formTitle,
-                                    category = formCategory,
-                                    amount = formAmount.toLongOrNull() ?: 0L,
-                                    date = submitDate,
-                                )
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary),
-                        shape = RoundedCornerShape(12.dp),
-                    ) {
-                        Text("Kirim", fontFamily = PlusJakartaSans)
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showForm = false; formError = false }) {
-                        Text("Batal", color = TextSecondary, fontFamily = PlusJakartaSans)
-                    }
-                },
-            )
-        }
-
-        if (showDatePicker) {
-            DatePickerDialog(
-                onDismissRequest = { showDatePicker = false },
-                confirmButton = {
-                    TextButton(onClick = {
-                        datePickerState.selectedDateMillis?.let { ms ->
-                            formDateMillis = ms
-                            val sdf = SimpleDateFormat("dd MMM yyyy", Locale("id", "ID")).also { f -> f.timeZone = TimeZone.getTimeZone("UTC") }
-                            formDate = sdf.format(Date(ms))
-                            formError = false
-                        }
-                        showDatePicker = false
-                    }) { Text("OK") }
-                },
-                dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Batal") } },
-            ) {
-                DatePicker(state = datePickerState)
-            }
-        }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

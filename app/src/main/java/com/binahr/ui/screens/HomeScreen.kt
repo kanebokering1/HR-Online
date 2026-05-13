@@ -295,7 +295,7 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     Button(
-                        onClick = { onNavigate(Screen.Attendance.createRoute("CHECK_IN")) },
+                        onClick = { onNavigate(Screen.AttendanceMap.createRoute("CHECK_IN")) },
                         modifier = Modifier
                             .weight(1f)
                             .height(50.dp),
@@ -308,7 +308,7 @@ fun HomeScreen(
                         Text("Check In", fontWeight = FontWeight.SemiBold, fontFamily = PlusJakartaSans)
                     }
                     Button(
-                        onClick = { onNavigate(Screen.Attendance.createRoute("CHECK_OUT")) },
+                        onClick = { onNavigate(Screen.AttendanceMap.createRoute("CHECK_OUT")) },
                         modifier = Modifier
                             .weight(1f)
                             .height(50.dp),
@@ -402,24 +402,25 @@ fun HomeScreen(
 
         val menuItems = homeMenuItems
 
-        Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 12.dp)) {
             menuItems.chunked(4).forEach { row ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    horizontalArrangement = Arrangement.SpaceAround,
                 ) {
                     row.forEach { item ->
-                        MenuCard(
-                            item = item,
+                        QuickActionTile(
+                            icon = item.icon,
+                            label = item.label,
                             onClick = { onNavigate(item.route) },
-                            modifier = Modifier.weight(1f),
+                            tint = item.iconColor,
                         )
                     }
                     repeat(4 - row.size) {
-                        Spacer(modifier = Modifier.weight(1f))
+                        Spacer(modifier = Modifier.size(80.dp))
                     }
                 }
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(12.dp))
             }
         }
 
@@ -483,6 +484,7 @@ private val homeMenuItems: List<MenuGridItem> = listOf(
     MenuGridItem("Kalender", Icons.Outlined.CalendarMonth, AccentPurple, AccentPurpleLight, Screen.Kalender.route),
     MenuGridItem("Cuti & Izin", Icons.Outlined.BeachAccess, AccentOrange, AccentOrangeLight, Screen.Cuti.route),
     MenuGridItem("Slip Gaji", Icons.Outlined.AccountBalanceWallet, OrangeHover, OrangeSurface, Screen.SlipGaji.route),
+    MenuGridItem("Pengajuan", Icons.Outlined.AssignmentTurnedIn, OrangePrimary, OrangeSurface, Screen.Pengajuan.route),
     MenuGridItem("Lembur", Icons.Outlined.MoreTime, AccentAmber, AccentAmberLight, Screen.Lembur.route),
     MenuGridItem("Reimburse", Icons.Outlined.Receipt, AccentIndigo, AccentIndigoLight, Screen.Reimbursement.route),
     MenuGridItem("Organisasi", Icons.Outlined.AccountTree, AccentCyan, AccentCyanLight, Screen.StrukturOrg.route),
@@ -605,38 +607,7 @@ private fun ImprovedStatCard(
     }
 }
 
-@Composable
-private fun MenuCard(
-    item: MenuGridItem,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
-            .clickable { onClick() }
-            .padding(vertical = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(52.dp)
-                .background(item.bgColor, RoundedCornerShape(16.dp)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(item.icon, contentDescription = item.label, tint = item.iconColor, modifier = Modifier.size(26.dp))
-        }
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(
-            text = item.label,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurface,
-            fontFamily = PlusJakartaSans,
-            maxLines = 1,
-        )
-    }
-}
+
 
 @Composable
 private fun AnnouncementCard(title: String, date: String, preview: String, accentColor: Color) {

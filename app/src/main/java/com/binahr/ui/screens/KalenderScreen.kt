@@ -20,7 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.binahr.ui.components.GradientTopBar
+import com.binahr.ui.components.BinaTopBar
 import com.binahr.ui.theme.*
 import com.binahr.ui.viewmodel.KalenderViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -73,7 +73,7 @@ fun KalenderScreen(onBack: () -> Unit, vm: KalenderViewModel = viewModel()) {
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        GradientTopBar(title = "Kalender", onBack = onBack)
+        BinaTopBar(title = "Kalender", onBack = onBack)
 
         Column(modifier = Modifier
             .padding(16.dp)

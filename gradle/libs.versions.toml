@@ -24,6 +24,9 @@ securityCrypto = "1.1.0-alpha06"
 lifecycleViewmodel = "2.8.7"
 firebaseBom = "33.7.0"
 googleServices = "4.4.2"
+mapsCompose = "4.4.1"
+playServicesMaps = "18.2.0"
+mlkitFaceDetection = "16.1.7"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -79,6 +82,13 @@ lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtim
 # Firebase (FCM push notifications)
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging-ktx" }
+
+# Maps Compose (Google Maps for Jetpack Compose)
+maps-compose = { group = "com.google.maps.android", name = "maps-compose", version.ref = "mapsCompose" }
+play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
+
+# ML Kit Face Detection (on-device, offline)
+mlkit-face-detection = { group = "com.google.mlkit", name = "face-detection", version.ref = "mlkitFaceDetection" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

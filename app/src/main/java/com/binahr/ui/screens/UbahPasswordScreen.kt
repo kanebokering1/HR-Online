@@ -66,7 +66,7 @@ fun UbahPasswordScreen(
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        GradientTopBar(title = "Ubah Password", onBack = onBack)
+        BinaTopBar(title = "Ubah Password", onBack = onBack)
 
         Column(
             modifier = Modifier

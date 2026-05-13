@@ -16,15 +16,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
+import androidx.compose.foundation.clickable
+
+enum class CardVariant { Default, Elevated, Outline }
+
 @Composable
 fun HRCard(
     modifier: Modifier = Modifier,
     cornerRadius: Dp = 16.dp,
     elevation: Dp = 2.dp,
     gradientBorder: Brush? = null,
+    variant: CardVariant = CardVariant.Default,
+    onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val shape = RoundedCornerShape(cornerRadius)
+    val clickMod = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
     if (gradientBorder != null) {
         Box(
             modifier = modifier
@@ -32,6 +39,7 @@ fun HRCard(
                 .clip(shape)
                 .background(gradientBorder)
                 .padding(2.dp)
+                .then(clickMod)
         ) {
             Surface(
                 shape = RoundedCornerShape(cornerRadius - 2.dp),
@@ -41,8 +49,12 @@ fun HRCard(
             }
         }
     } else {
+        val cardElevation = when (variant) {
+            CardVariant.Elevated -> elevation + 2.dp
+            else -> elevation
+        }
         Card(
-            modifier = modifier.shadow(elevation, shape),
+            modifier = modifier.shadow(cardElevation, shape).then(clickMod),
             shape = shape,
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         ) {

@@ -51,6 +51,9 @@ data class UserDto(
     val name: String,
     val email: String,
     @SerializedName("email_verified_at") val emailVerifiedAt: String?,
+    val permissions: List<String>? = null,
+    val roles: List<String>? = null,
+    val entitlements: Map<String, Any?>? = null,
 )
 
 // ═══════════════════════════════════════════════════════════════════
@@ -127,6 +130,21 @@ data class CompanyDto(
     val address: String?,
 )
 
+// ═══════════════════════════════════════════════════════════════════
+// TENANT SETTINGS
+// ═══════════════════════════════════════════════════════════════════
+
+data class GeofenceDto(
+    @SerializedName("office_lat")    val officeLat: Double,
+    @SerializedName("office_lng")    val officeLng: Double,
+    @SerializedName("office_radius") val officeRadius: Int,
+    val enabled: Boolean,
+)
+
+data class TenantSettingsDto(
+    val geofence: GeofenceDto,
+)
+
 data class UpdateProfileRequest(
     val phone: String? = null,
     val address: String? = null,
@@ -165,9 +183,9 @@ data class CheckOutRequest(
 )
 
 data class AttendanceCorrectionRequest(
-    val date: String,
-    @SerializedName("correct_clock_in")  val correctClockIn: String?,
-    @SerializedName("correct_clock_out") val correctClockOut: String?,
+    @SerializedName("attendance_log_id") val attendanceLogId: String,
+    @SerializedName("clock_in_at")       val clockInAt: String,
+    @SerializedName("clock_out_at")      val clockOutAt: String?,
     val reason: String,
 )
 
@@ -402,9 +420,10 @@ data class PerformanceReviewDto(
 )
 
 data class SubmitPerformanceReviewRequest(
-    @SerializedName("cycle_id") val cycleId: String,
+    @SerializedName("performance_cycle_id") val cycleId: String,
     val score: Double,
-    val notes: String? = null,
+    val summary: String? = null,
+    val status: String = "submitted",
 )
 
 // ═══════════════════════════════════════════════════════════════════
@@ -446,6 +465,43 @@ data class AnnouncementDto(
     val category: String?,
     @SerializedName("published_at") val publishedAt: String?,
     @SerializedName("is_pinned")    val isPinned: Boolean,
+)
+
+// ═══════════════════════════════════════════════════════════════════
+// PROFILE CHANGE REQUESTS
+// ═══════════════════════════════════════════════════════════════════
+
+data class ProfileChangeRequestDto(
+    val id: String,
+    @SerializedName("field_key")  val fieldKey: String,
+    @SerializedName("old_value")  val oldValue: String?,
+    @SerializedName("new_value")  val newValue: String?,
+    val status: String,   // pending | approved | rejected
+    val note: String?,
+    @SerializedName("created_at") val createdAt: String?,
+)
+
+data class FieldChange(
+    @SerializedName("field_key")  val fieldKey: String,
+    @SerializedName("new_value")  val newValue: String?,
+)
+
+data class SubmitProfileChangeRequestsBody(
+    val changes: List<FieldChange>,
+)
+
+data class SubmitProfileChangeResult(
+    val created: Int,
+    val skipped: List<String>,
+)
+
+// ═══════════════════════════════════════════════════════════════════
+// FCM / PUSH TOKEN
+// ═══════════════════════════════════════════════════════════════════
+
+data class FcmTokenRequest(
+    val token: String,
+    val platform: String = "android",
 )
 
 // ═══════════════════════════════════════════════════════════════════

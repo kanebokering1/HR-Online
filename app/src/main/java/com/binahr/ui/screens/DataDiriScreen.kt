@@ -78,7 +78,7 @@ fun DataDiriScreen(onBack: () -> Unit, vm: ProfileViewModel = viewModel()) {
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding ->
         Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-            GradientTopBar(
+            BinaTopBar(
                 title = "Data Diri",
                 onBack = onBack,
                 actions = {
@@ -86,7 +86,6 @@ fun DataDiriScreen(onBack: () -> Unit, vm: ProfileViewModel = viewModel()) {
                         Icon(
                             Icons.Outlined.Edit,
                             contentDescription = "Edit kontak",
-                            tint = Color.White,
                         )
                     }
                 },

@@ -104,6 +104,50 @@ fun AppNavigation() {
             )
         }
 
+        composable(
+            route = Screen.AttendanceMap.route,
+            arguments = listOf(navArgument("type") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val type = backStackEntry.arguments?.getString("type") ?: "CHECK_IN"
+            AttendanceMapScreen(
+                attendanceType = type,
+                onBack = { navController.popBackStack() },
+                onProceed = { lat, lon, addr ->
+                    navController.navigate(Screen.AttendanceFace.createRoute(type, lat, lon, addr))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.AttendanceFace.route,
+            arguments = listOf(
+                navArgument("type") { type = NavType.StringType },
+                navArgument("lat") { type = NavType.StringType },
+                navArgument("lon") { type = NavType.StringType },
+                navArgument("address") { type = NavType.StringType },
+            )
+        ) { backStackEntry ->
+            val type = backStackEntry.arguments?.getString("type") ?: "CHECK_IN"
+            val lat = backStackEntry.arguments?.getString("lat")?.toDoubleOrNull() ?: 0.0
+            val lon = backStackEntry.arguments?.getString("lon")?.toDoubleOrNull() ?: 0.0
+            val addr = java.net.URLDecoder.decode(
+                backStackEntry.arguments?.getString("address") ?: "", "UTF-8"
+            )
+            AttendanceFaceScreen(
+                attendanceType = type,
+                lat = lat,
+                lon = lon,
+                address = addr,
+                onBack = { navController.popBackStack() },
+                onSuccess = { record ->
+                    val msg = if (type == "CHECK_IN") "Absen Masuk Berhasil!" else "Absen Pulang Berhasil!"
+                    navController.navigate(Screen.Success.createRoute(msg, "Data kehadiran telah tercatat")) {
+                        popUpTo(Screen.AttendanceMap.createRoute(type)) { inclusive = true }
+                    }
+                }
+            )
+        }
+
         composable(Screen.DataDiri.route) {
             DataDiriScreen(onBack = { navController.popBackStack() })
         }
@@ -111,7 +155,11 @@ fun AppNavigation() {
             KalenderScreen(onBack = { navController.popBackStack() })
         }
         composable(Screen.Cuti.route) {
-            CutiScreen(onBack = { navController.popBackStack() })
+            CutiScreen(
+                onBack = { navController.popBackStack() },
+                onAjukanCuti = { navController.navigate(Screen.AjukanCuti.route) },
+                onNavigateDetail = { id -> navController.navigate(Screen.CutiDetail.createRoute(id)) },
+            )
         }
         composable(Screen.SlipGaji.route) {
             SlipGajiScreen(onBack = { navController.popBackStack() })
@@ -120,7 +168,11 @@ fun AppNavigation() {
             PengumumanScreen(onBack = { navController.popBackStack() })
         }
         composable(Screen.Lembur.route) {
-            LemburScreen(onBack = { navController.popBackStack() })
+            LemburScreen(
+                onBack = { navController.popBackStack() },
+                onAjukanLembur = { navController.navigate(Screen.AjukanLembur.route) },
+                onNavigateDetail = { id -> navController.navigate(Screen.LemburDetail.createRoute(id)) },
+            )
         }
         // Izin/Sakit merged into Cuti screen (leave type filter)
         composable(Screen.Notifikasi.route) {
@@ -130,7 +182,11 @@ fun AppNavigation() {
             UbahPasswordScreen(onBack = { navController.popBackStack() })
         }
         composable(Screen.Reimbursement.route) {
-            ReimbursementScreen(onBack = { navController.popBackStack() })
+            ReimbursementScreen(
+                onBack = { navController.popBackStack() },
+                onAjukanReimbursement = { navController.navigate(Screen.AjukanReimbursement.route) },
+                onNavigateDetail = { id -> navController.navigate(Screen.ReimbursementDetail.createRoute(id)) },
+            )
         }
         composable(Screen.StrukturOrg.route) {
             StrukturOrgScreen(onBack = { navController.popBackStack() })
@@ -142,16 +198,124 @@ fun AppNavigation() {
             FAQScreen(onBack = { navController.popBackStack() })
         }
         composable(Screen.Approvals.route) {
-            ApprovalsScreen(onBack = { navController.popBackStack() })
+            ApprovalsScreen(
+                onBack = { navController.popBackStack() },
+                onNavigateDetail = { id -> navController.navigate(Screen.ApprovalDetail.createRoute(id)) },
+            )
         }
         composable(Screen.Performance.route) {
-            PerformanceScreen(onBack = { navController.popBackStack() })
+            PerformanceScreen(
+                onBack = { navController.popBackStack() },
+                onNavigateDetail = { id -> navController.navigate(Screen.PerformanceCycleDetail.createRoute(id)) },
+            )
         }
         composable(Screen.JadwalShift.route) {
             JadwalShiftScreen(onBack = { navController.popBackStack() })
         }
         composable(Screen.Asset.route) {
             AssetScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable(Screen.Pengajuan.route) {
+            PengajuanScreen(
+                onBack = { navController.popBackStack() },
+                onNavigateCuti = { navController.navigate(Screen.AjukanCuti.route) },
+                onNavigateLembur = { navController.navigate(Screen.AjukanLembur.route) },
+                onNavigateReimbursement = { navController.navigate(Screen.AjukanReimbursement.route) },
+            )
+        }
+        composable(Screen.AjukanCuti.route) {
+            AjukanCutiScreen(
+                onBack = { navController.popBackStack() },
+                onSuccess = { navController.popBackStack() },
+            )
+        }
+        composable(Screen.AjukanLembur.route) {
+            AjukanLemburScreen(
+                onBack = { navController.popBackStack() },
+                onSuccess = { navController.popBackStack() },
+            )
+        }
+        composable(Screen.AjukanReimbursement.route) {
+            AjukanReimbursementScreen(
+                onBack = { navController.popBackStack() },
+                onSuccess = { navController.popBackStack() },
+            )
+        }
+        composable(
+            route = Screen.ApprovalDetail.route,
+            arguments = listOf(navArgument("id") { type = NavType.StringType }),
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("id") ?: ""
+            ApprovalDetailScreen(
+                id = id,
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(Screen.AttendanceCorrection.route) {
+            AttendanceCorrectionScreen(
+                onBack = { navController.popBackStack() },
+                onSuccess = {
+                    navController.navigate(
+                        Screen.Success.createRoute("Koreksi kehadiran berhasil dikirim", "Menunggu verifikasi admin")
+                    )
+                },
+            )
+        }
+        composable(Screen.DataDiriEdit.route) {
+            DataDiriEditScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.Recruitment.route) {
+            RecruitmentScreen(onBack = { navController.popBackStack() })
+        }
+        composable(
+            route = Screen.CutiDetail.route,
+            arguments = listOf(navArgument("id") { type = NavType.StringType }),
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("id") ?: ""
+            CutiDetailScreen(id = id, onBack = { navController.popBackStack() })
+        }
+        composable(
+            route = Screen.LemburDetail.route,
+            arguments = listOf(navArgument("id") { type = NavType.StringType }),
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("id") ?: ""
+            LemburDetailScreen(id = id, onBack = { navController.popBackStack() })
+        }
+        composable(
+            route = Screen.ReimbursementDetail.route,
+            arguments = listOf(navArgument("id") { type = NavType.StringType }),
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("id") ?: ""
+            ReimbursementDetailScreen(id = id, onBack = { navController.popBackStack() })
+        }
+        composable(
+            route = Screen.PerformanceCycleDetail.route,
+            arguments = listOf(navArgument("id") { type = NavType.StringType }),
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("id") ?: ""
+            PerformanceCycleDetailScreen(id = id, onBack = { navController.popBackStack() })
+        }
+        composable(
+            route = Screen.Success.route,
+            arguments = listOf(
+                navArgument("message") { type = NavType.StringType; defaultValue = "Berhasil!" },
+                navArgument("sub") { type = NavType.StringType; defaultValue = "" },
+            ),
+        ) { backStackEntry ->
+            val message = java.net.URLDecoder.decode(
+                backStackEntry.arguments?.getString("message") ?: "Berhasil!", "UTF-8"
+            )
+            val sub = java.net.URLDecoder.decode(
+                backStackEntry.arguments?.getString("sub") ?: "", "UTF-8"
+            )
+            SuccessScreen(
+                message = message,
+                subMessage = sub.ifEmpty { null },
+                onDismiss = {
+                    navController.popBackStack(Screen.Success.route, inclusive = true)
+                },
+            )
         }
     }
 }
@@ -186,8 +350,8 @@ fun MainScreen(rootNavController: NavHostController) {
             composable(Screen.Home.route) {
                 HomeScreen(
                     onNavigate = { route ->
-                        // Tab routes belong to bottomNavController; everything else to root
-                        if (route == Screen.History.route || route == Screen.Profile.route || route == Screen.Home.route) {
+                        val bottomTabs = setOf(Screen.Home.route, Screen.History.route, Screen.SlipGaji.route, Screen.Pengajuan.route, Screen.Profile.route)
+                        if (route in bottomTabs) {
                             bottomNavController.navigate(route) {
                                 popUpTo(Screen.Home.route) { saveState = true }
                                 launchSingleTop = true
@@ -202,6 +366,17 @@ fun MainScreen(rootNavController: NavHostController) {
             }
             composable(Screen.History.route) {
                 HistoryScreen(onBack = {})
+            }
+            composable(Screen.SlipGaji.route) {
+                SlipGajiScreen(onBack = {})
+            }
+            composable(Screen.Pengajuan.route) {
+                PengajuanScreen(
+                    onBack = {},
+                    onNavigateCuti = { rootNavController.navigate(Screen.Cuti.route) },
+                    onNavigateLembur = { rootNavController.navigate(Screen.Lembur.route) },
+                    onNavigateReimbursement = { rootNavController.navigate(Screen.Reimbursement.route) },
+                )
             }
             composable(Screen.Profile.route) {
                 val scope = rememberCoroutineScope()

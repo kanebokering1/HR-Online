@@ -24,6 +24,7 @@ object TokenManager {
     private const val KEY_EMPLOYEE_ID   = "employee_id"
     private const val KEY_FCM_TOKEN     = "fcm_token"
     private const val KEY_TENANT_DOMAIN = "tenant_domain"
+    private const val KEY_PERMISSIONS   = "permissions"
 
     private var prefs: SharedPreferences? = null
 
@@ -68,6 +69,20 @@ object TokenManager {
         set(value) { prefs?.edit()?.putString(KEY_FCM_TOKEN, value)?.apply() }
 
     /**
+     * Comma-separated permission names from the server's /auth/me response.
+     * Used for RBAC gating in the UI (no direct enforcement — server enforces).
+     */
+    var permissions: String?
+        get() = prefs?.getString(KEY_PERMISSIONS, null)
+        set(value) { prefs?.edit()?.putString(KEY_PERMISSIONS, value)?.apply() }
+
+    fun hasPermission(permission: String): Boolean =
+        permissions?.split(",")?.contains(permission) == true
+
+    fun hasAnyPermission(vararg perms: String): Boolean =
+        perms.any { hasPermission(it) }
+
+    /**
      * Tenant domain used as X-Tenant header in every API request.
      * Falls back to BuildConfig.TENANT_DOMAIN if the user never set a custom domain
      * (single-tenant deployments / debug builds).
@@ -96,6 +111,7 @@ object TokenManager {
             ?.remove(KEY_USER_EMAIL)
             ?.remove(KEY_USER_ID)
             ?.remove(KEY_EMPLOYEE_ID)
+            ?.remove(KEY_PERMISSIONS)
             ?.apply()
     }
 

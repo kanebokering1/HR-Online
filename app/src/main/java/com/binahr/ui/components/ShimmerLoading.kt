@@ -65,6 +65,38 @@ fun ShimmerCard(modifier: Modifier = Modifier) {
     }
 }
 
+/** Full-screen shimmer list — replaces CircularProgressIndicator on list screens. */
+@Composable
+fun SkeletonListScreen(count: Int = 5) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        repeat(count) {
+            ShimmerCard()
+        }
+    }
+}
+
+/** Full-screen shimmer detail — for detail/form screens while loading. */
+@Composable
+fun SkeletonDetailScreen() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        ShimmerBox(height = 24.dp, modifier = Modifier.fillMaxWidth(0.5f))
+        ShimmerBox(height = 120.dp, cornerRadius = 16.dp)
+        repeat(4) {
+            ShimmerBox(height = 56.dp, cornerRadius = 12.dp)
+        }
+    }
+}
+
 
 
 

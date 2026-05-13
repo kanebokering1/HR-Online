@@ -15,20 +15,21 @@ import androidx.compose.ui.unit.dp
 import com.airbnb.lottie.compose.*
 import com.binahr.R
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.binahr.ui.theme.OrangePrimary
+
 @Composable
 fun EmptyState(
     title: String,
     subtitle: String = "",
     modifier: Modifier = Modifier,
     lottieResId: Int = R.raw.empty_state,
+    icon: ImageVector? = null,
     action: (@Composable () -> Unit)? = null,
 ) {
-    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(lottieResId))
-    val progress by animateLottieCompositionAsState(
-        composition = composition,
-        iterations = LottieConstants.IterateForever,
-    )
-
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -36,11 +37,27 @@ fun EmptyState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        LottieAnimation(
-            composition = composition,
-            progress = { progress },
-            modifier = Modifier.size(200.dp),
-        )
+        if (icon != null) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(80.dp)
+                    .background(OrangePrimary.copy(alpha = 0.12f), CircleShape),
+            ) {
+                Icon(imageVector = icon, contentDescription = null, tint = OrangePrimary, modifier = Modifier.size(40.dp))
+            }
+        } else {
+            val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(lottieResId))
+            val progress by animateLottieCompositionAsState(
+                composition = composition,
+                iterations = LottieConstants.IterateForever,
+            )
+            LottieAnimation(
+                composition = composition,
+                progress = { progress },
+                modifier = Modifier.size(200.dp),
+            )
+        }
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = title,

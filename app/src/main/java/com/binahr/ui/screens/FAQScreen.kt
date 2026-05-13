@@ -34,7 +34,7 @@ fun FAQScreen(
     val isLoading by vm.isLoading.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        GradientTopBar(title = "FAQ & Bantuan", onBack = onBack)
+        BinaTopBar(title = "FAQ & Bantuan", onBack = onBack)
 
         // Contact card
         HRCard(modifier = Modifier.padding(16.dp)) {
@@ -63,9 +63,7 @@ fun FAQScreen(
         SectionHeader(title = "Pertanyaan Umum")
 
         if (isLoading && faqItems.isEmpty()) {
-            Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = GreenPrimary)
-            }
+            SkeletonListScreen()
         } else {
             LazyColumn(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
@@ -139,7 +137,7 @@ fun FAQScreen(onBack: () -> Unit) {
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        GradientTopBar(title = "FAQ & Bantuan", onBack = onBack)
+        BinaTopBar(title = "FAQ & Bantuan", onBack = onBack)
 
         // Contact card
         HRCard(modifier = Modifier.padding(16.dp)) {

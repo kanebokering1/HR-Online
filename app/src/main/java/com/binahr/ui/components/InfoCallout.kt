@@ -17,8 +17,10 @@ import androidx.compose.ui.unit.dp
 import com.binahr.ui.theme.Green50
 import com.binahr.ui.theme.GreenPrimary
 
+import androidx.compose.material.icons.filled.Warning
+
 enum class CalloutType {
-    INFO, ERROR
+    INFO, WARNING, ERROR
 }
 
 @Composable
@@ -27,9 +29,21 @@ fun InfoCallout(
     type: CalloutType = CalloutType.INFO,
     modifier: Modifier = Modifier
 ) {
-    val bgColor = if (type == CalloutType.ERROR) MaterialTheme.colorScheme.errorContainer else Green50
-    val contentColor = if (type == CalloutType.ERROR) MaterialTheme.colorScheme.onErrorContainer else GreenPrimary
-    val icon = if (type == CalloutType.ERROR) Icons.Default.Error else Icons.Default.Info
+    val bgColor = when (type) {
+        CalloutType.ERROR   -> MaterialTheme.colorScheme.errorContainer
+        CalloutType.WARNING -> Color(0xFFFFF3CD)
+        CalloutType.INFO    -> Green50
+    }
+    val contentColor = when (type) {
+        CalloutType.ERROR   -> MaterialTheme.colorScheme.onErrorContainer
+        CalloutType.WARNING -> Color(0xFF856404)
+        CalloutType.INFO    -> GreenPrimary
+    }
+    val icon = when (type) {
+        CalloutType.ERROR   -> Icons.Default.Error
+        CalloutType.WARNING -> Icons.Default.Warning
+        CalloutType.INFO    -> Icons.Default.Info
+    }
 
     Row(
         modifier = modifier

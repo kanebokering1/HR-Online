@@ -15,6 +15,7 @@ val localProperties = Properties().apply {
     if (f.exists()) FileInputStream(f).use { load(it) }
 }
 val googleWebClientId: String = localProperties.getProperty("GOOGLE_WEB_CLIENT_ID", "")
+val mapsApiKey: String = localProperties.getProperty("MAPS_API_KEY", "")
 
 android {
     namespace = "com.binahr"
@@ -33,6 +34,7 @@ android {
         }
 
         buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleWebClientId\"")
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
     }
 
     buildTypes {
@@ -143,6 +145,13 @@ dependencies {
     // Firebase (FCM push notifications)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
+
+    // Google Maps Compose
+    implementation(libs.maps.compose)
+    implementation(libs.play.services.maps)
+
+    // ML Kit Face Detection (on-device, no extra Firebase config)
+    implementation(libs.mlkit.face.detection)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

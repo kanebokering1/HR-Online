@@ -4,10 +4,14 @@ package com.binahr.ui.components
 import com.binahr.BuildConfig
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.AccessTime
+import androidx.compose.material.icons.outlined.AccountBalanceWallet
+import androidx.compose.material.icons.outlined.Assignment
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -24,9 +28,11 @@ data class BottomNavItem(
 )
 
 val bottomNavItems = listOf(
-    BottomNavItem("Home", Screen.Home.route, Icons.Filled.Home, Icons.Outlined.Home),
-    BottomNavItem("Riwayat", Screen.History.route, Icons.Filled.History, Icons.Outlined.History),
-    BottomNavItem("Profil", Screen.Profile.route, Icons.Filled.Person, Icons.Outlined.Person),
+    BottomNavItem("Home",       Screen.Home.route,       Icons.Filled.Home,                 Icons.Outlined.Home),
+    BottomNavItem("Waktu",      Screen.History.route,    Icons.Filled.AccessTime,            Icons.Outlined.AccessTime),
+    BottomNavItem("Gaji",       Screen.SlipGaji.route,   Icons.Filled.AccountBalanceWallet,  Icons.Outlined.AccountBalanceWallet),
+    BottomNavItem("Pengajuan",  Screen.Pengajuan.route,  Icons.Filled.Assignment,            Icons.Outlined.Assignment),
+    BottomNavItem("Profil",     Screen.Profile.route,    Icons.Filled.Person,                Icons.Outlined.Person),
 )
 
 @Composable

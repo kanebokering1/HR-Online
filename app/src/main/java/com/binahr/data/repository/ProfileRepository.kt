@@ -51,4 +51,25 @@ class ProfileRepository {
     } catch (e: Exception) {
         Result.failure(e)
     }
+
+    suspend fun getProfileChangeRequests(): Result<List<ProfileChangeRequestDto>> = try {
+        val envelope = ApiConfig.apiService.getMyProfileChangeRequests()
+        Result.success(envelope.data ?: emptyList())
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+
+    suspend fun submitProfileChangeRequests(changes: List<FieldChange>): Result<SubmitProfileChangeResult> = try {
+        val envelope = ApiConfig.apiService.submitProfileChangeRequests(SubmitProfileChangeRequestsBody(changes))
+        Result.success(envelope.data ?: throw Exception("Respon server kosong"))
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+
+    suspend fun updateFcmToken(token: String): Result<Unit> = try {
+        ApiConfig.apiService.updateFcmToken(FcmTokenRequest(token = token))
+        Result.success(Unit)
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
 }

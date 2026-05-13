@@ -31,7 +31,7 @@ fun StrukturOrgScreen(
     val error       by vm.error.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        GradientTopBar(title = "Struktur Organisasi", onBack = onBack)
+        BinaTopBar(title = "Struktur Organisasi", onBack = onBack)
 
             error?.let { msg ->
                 InfoCallout(message = msg, type = CalloutType.ERROR, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
@@ -39,9 +39,7 @@ fun StrukturOrgScreen(
 
         when {
             isLoading -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = GreenPrimary)
-                }
+                SkeletonListScreen()
             }
             departments.isEmpty() -> {
                 EmptyState(

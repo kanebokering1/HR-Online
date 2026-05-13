@@ -30,12 +30,10 @@ fun PengumumanScreen(onBack: () -> Unit, vm: PengumumanViewModel = viewModel()) 
     var expandedId by remember { mutableStateOf<String?>(null) }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        GradientTopBar(title = "Pengumuman", onBack = onBack)
+        BinaTopBar(title = "Pengumuman", onBack = onBack)
 
         if (isLoading && announcements.isEmpty()) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = GreenPrimary)
-            }
+            SkeletonListScreen()
         } else if (announcements.isEmpty()) {
             EmptyState(title = "Belum Ada Pengumuman", subtitle = "Tidak ada pengumuman saat ini", modifier = Modifier.weight(1f))
         } else {

@@ -32,7 +32,7 @@ fun NotifikasiScreen(onBack: () -> Unit, vm: NotifikasiViewModel = viewModel()) 
     val isLoading by vm.isLoading.collectAsStateWithLifecycle()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        GradientTopBar(title = "Notifikasi", onBack = onBack)
+        BinaTopBar(title = "Notifikasi", onBack = onBack)
 
         // Unread count
         Row(
@@ -53,7 +53,7 @@ fun NotifikasiScreen(onBack: () -> Unit, vm: NotifikasiViewModel = viewModel()) 
         }
 
         if (isLoading && notifications.isEmpty()) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = GreenPrimary) }
+            SkeletonListScreen()
         } else {
         LazyColumn(
             contentPadding = PaddingValues(horizontal = 16.dp),

@@ -91,6 +91,9 @@ class AuthRepository {
         TokenManager.userName  = user.name
         TokenManager.userEmail = user.email
         TokenManager.userId    = user.id
+        if (!user.permissions.isNullOrEmpty()) {
+            TokenManager.permissions = user.permissions.joinToString(",")
+        }
         // employeeId resolved lazily when needed (via /v1/auth/me or /v1/employees)
     }
 
@@ -119,6 +122,9 @@ class AuthRepository {
         return try {
             val envelope = ApiConfig.apiService.me()
             val data = envelope.data ?: throw Exception("Profil tidak ditemukan")
+            if (!data.permissions.isNullOrEmpty()) {
+                TokenManager.permissions = data.permissions.joinToString(",")
+            }
             Result.success(data)
         } catch (e: Exception) {
             Result.failure(Exception(parseError(e)))

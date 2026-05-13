@@ -7,8 +7,8 @@ import com.binahr.data.api.model.*
 
 class PayrollRepository {
 
-    suspend fun getSlips(page: Int = 1): Result<LaravelPaginated<PayrollSlipDto>> = try {
-        Result.success(ApiConfig.apiService.payrollSlips(page))
+    suspend fun getSlips(page: Int = 1, year: Int? = null, month: Int? = null): Result<LaravelPaginated<PayrollSlipDto>> = try {
+        Result.success(ApiConfig.apiService.payrollSlips(page, year, month))
     } catch (e: Exception) {
         Result.failure(e)
     }

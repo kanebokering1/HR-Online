@@ -164,7 +164,7 @@ fun AttendanceScreen(
     val sheetState = rememberModalBottomSheetState()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        GradientTopBar(
+        BinaTopBar(
             title = if (type == AttendanceType.CHECK_IN) "Check In" else "Check Out",
             onBack = onBack,
         )
@@ -173,17 +173,7 @@ fun AttendanceScreen(
             AttendanceState.FORM -> {
                 // API error banner
                 apiError?.let { err ->
-                    Card(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
-                    ) {
-                        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Filled.ErrorOutline, contentDescription = null, tint = MaterialTheme.colorScheme.error)
-                            Spacer(Modifier.width(8.dp))
-                            Text(err, color = MaterialTheme.colorScheme.onErrorContainer, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
-                            IconButton(onClick = { apiError = null }) { Icon(Icons.Filled.Close, contentDescription = null) }
-                        }
-                    }
+                    InfoCallout(message = err, type = CalloutType.ERROR, modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp))
                 }
 
                 Column(
